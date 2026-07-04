@@ -1,0 +1,109 @@
+✅ COMPLETED FUNCTIONALITY
+
+Auth:
+
+LoginPage.js and RegisterPage.js exist.
+
+Role-based dashboard routing is handled.
+
+Dashboards:
+
+StudentDashboard.js, InstructorDashboard.js, AdminDashboard.js are present.
+
+Course catalog:
+
+CourseCatalog.js and CourseDetail.js implemented.
+
+Course creation:
+
+CreateCourse.js exists for instructors.
+
+Enrollments:
+
+ViewEnrollments.js (for instructors) and EnrolledCourses.js (for students).
+
+Lessons:
+
+ManageLessons.js exists.
+
+Quizzes:
+
+QuizAttemptPage.js and Quizzes.js component exist.
+
+Payments:
+
+Payments.js component exists and links mock payment flow.
+
+Reviews:
+
+Reviews.js is implemented.
+
+Admin features:
+
+AdminCourseApproval.js, AdminStats.js, AdminPermissions.js implemented.
+
+🟡 PARTIALLY DONE / NEEDS ATTENTION
+
+User Review Moderation (Admin)
+
+Missing admin page for editing/deleting reviews/comments.
+
+Reviews.js is a component for users; admin needs a separate review manager.
+
+Admin Dashboard Statistics
+
+AdminDashboard.js exists but should include cards like:
+
+Total Users
+
+Total Instructors
+
+Published Courses
+
+Pending Approvals
+
+Total Reviews
+
+Today's Enrollments
+
+Needs backend API integration or mock data.
+
+Profile.js
+
+Exists as a component but lacks connection to user data or update logic.
+
+ProtectedRoute.js
+
+Present, but doesn't fully check role-based access across all routes.
+
+❌ MISSING / NOT WIRED UP
+
+No route page for editing existing courses or lessons.
+
+No clear “Course Management” dashboard for instructors (edit/delete course or quiz).
+
+No admin user search, filtering, or role change forms (though AdminPermissions.js is a start).
+
+No file uploads (e.g., for video lessons or course thumbnails).
+
+No real quiz result feedback on QuizAttemptPage.js.
+
+📂 SUGGESTED FOLDER ADDITIONS
+
+/admin/ReviewManager.js — for managing user reviews/comments.
+
+/instructor/ManageCourses.js — for updating/deleting their courses.
+
+/components/StatsCard.js — reusable cards for dashboard statistics.
+
+/components/ProtectedRouteByRole.js — for better route access by role.
+
+✅ NEXT STEP: What would you like to focus on now?
+
+For example:
+
+Should I scaffold the Admin Review Manager page next?
+
+Or should we flesh out the AdminDashboard with functional overview cards first?
+
+Or do you want to wire up role-based protection via ProtectedRoute.js?
