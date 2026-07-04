@@ -85,11 +85,11 @@ function Login() {
     
     try {
       const { data: { access, refresh } } = await axios.post(
-        'http://localhost:8000/api/token/', 
+        `${process.env.REACT_APP_API_URL}/api/token/`, 
         { username, password }
       );
 
-      const { data: user } = await axios.get('http://localhost:8000/api/users/me/', {
+      const { data: user } = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/me/`, {
         headers: { Authorization: `Bearer ${access}` }
       });
 

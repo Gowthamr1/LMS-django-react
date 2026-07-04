@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password, role) => {
     try {
-      const response = await fetch('http://localhost:8000/api/users/register/', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password, role }),
