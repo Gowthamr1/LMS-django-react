@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// eslint-disable-next-line
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 

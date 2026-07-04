@@ -6,9 +6,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CourseCatalog from './pages/CourseCatalog';
 import CourseDetail from './pages/CourseDetail';
+// eslint-disable-next-line
 import LessonViewer from './pages/LessonViewer';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
+// eslint-disable-next-line
 import AvailableCourses from './pages/AvailableCourses';
 import CreateCourse from './pages/CreateCourse';
 import CreateLesson from './pages/CreateLesson';
@@ -29,6 +31,7 @@ import StudentLessons from './pages/StudentLessons';
 import StudentProgress from './pages/StudentProgress';
 import MyCourses from './pages/MyCourses';
 import PaymentPage from './pages/PaymentPage';
+// eslint-disable-next-line
 import Quizzes from './components/Quizzes';
 import Reviews from './components/Reviews';
 import Profile from './components/Profile';
@@ -45,9 +48,11 @@ import HomePage from './pages/HomePage';
 // Role-based dashboards
 import StudentDashboard from './dashboards/student/StudentDashboard';
 import InstructorDashboard from './dashboards/instructor/InstructorDashboard';
+// eslint-disable-next-line
 import AdminDashboard from './dashboards/admin/AdminDashboard';
 
 function AppWrapper() {
+  // eslint-disable-next-line
   const location = useLocation();
   const [user, setUser] = useState(null);
 

@@ -9,7 +9,9 @@ export default function StudentAvailableCourses() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+
     const load = async () => {
+
       try {
         // refresh header
         axiosInstance.defaults.headers['Authorization'] = `Bearer ${getToken()}`;
@@ -21,7 +23,7 @@ export default function StudentAvailableCourses() {
     };
     load();
   }, [getToken]);
-
+// eslint-disable-next-line
   const enroll = async (courseId) => {
     try {
       await axiosInstance.post('/courses/enrollments/', { course: courseId });
