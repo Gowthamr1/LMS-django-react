@@ -72,9 +72,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://lms-django-react-one.vercel.app",
 ]
-
-
 ROOT_URLCONF = 'lms_backend.urls'
 
 TEMPLATES = [
@@ -94,7 +93,9 @@ TEMPLATES = [
 
 AUTH_USER_MODEL = 'users.User'
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://lms-django-react-one.vercel.app",
+]
 
 WSGI_APPLICATION = 'lms_backend.wsgi.application'
 
