@@ -46,11 +46,12 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     completed_lessons = serializers.SerializerMethodField()
     total_lessons = serializers.SerializerMethodField()
     last_accessed = serializers.SerializerMethodField()
+    first_lesson_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
         fields = '__all__'
-        extra_fields = ['course_title', 'student', 'completed_lessons', 'total_lessons']
+        extra_fields = ['course_title', 'student', 'completed_lessons', 'total_lessons', 'first_lesson_id']
 
     def get_completed_lessons(self, obj):
         return LessonCompletion.objects.filter(
@@ -60,6 +61,10 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     def get_total_lessons(self, obj):
         return obj.course.lessons.count()
+
+    def get_first_lesson_id(self, obj):
+        first_lesson = obj.course.lessons.order_by('order').first()
+        return first_lesson.id if first_lesson else None
     
     
     def get_last_accessed(self, obj):

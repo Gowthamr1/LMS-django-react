@@ -115,9 +115,15 @@ function StudentProgress() {
                   </div>
                 </div>
 
-                <Link to={`/lesson/${enroll.course}`} style={styles.continueBtn}>
-                  {enroll.completed ? '🔁 Review' : '▶ Continue'}
-                </Link>
+                {enroll.first_lesson_id ? (
+                  <Link to={`/lesson/${enroll.first_lesson_id}`} style={styles.continueBtn}>
+                    {enroll.completed ? '🔁 Review' : '▶ Continue'}
+                  </Link>
+                ) : (
+                  <span style={{ ...styles.continueBtn, opacity: 0.5, cursor: 'not-allowed' }}>
+                    No lessons yet
+                  </span>
+                )}
               </div>
             );
           })}
