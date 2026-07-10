@@ -21,7 +21,15 @@ class CourseSerializer(serializers.ModelSerializer):
     is_enrolled = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     instructor_name = serializers.ReadOnlyField(source='instructor.username')  # <-- Add this
-
+    class Meta:
+        model = Course
+        fields = '__all__'
+        read_only_fields = ['instructor', 'created_at', 'lessons']
+    def get_is_enrolled(self, obj):
+        user = self.context['request'].user
+        return user.is_authenticated and obj.enrollments.filter(student=user).exists()
+    
+    
     class Meta:
         model = Course
         fields = '__all__'

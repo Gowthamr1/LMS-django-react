@@ -96,9 +96,13 @@ class QuizAttemptViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         quiz_attempt = serializer.save(student=self.request.user)
 
-        # Mark lesson as completed if not already
-        lesson = quiz_attempt.quiz.lesson
-        LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
+    # Only mark the lesson as completed once the student scores 70% or higher
+        total_questions = quiz_attempt.quiz.questions.count()
+        passed = total_questions > 0 and (quiz_attempt.score / total_questions) >= 0.7
+
+        if passed:
+                    lesson = quiz_attempt.quiz.lesson
+                    LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
 
         return quiz_attempt
 

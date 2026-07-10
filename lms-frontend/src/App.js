@@ -10,8 +10,7 @@ import CourseDetail from './pages/CourseDetail';
 import LessonViewer from './pages/LessonViewer';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
-// eslint-disable-next-line
-import AvailableCourses from './pages/AvailableCourses';
+
 import CreateCourse from './pages/CreateCourse';
 import CreateLesson from './pages/CreateLesson';
 import ManageCourses from './pages/ManageCourses';
@@ -38,7 +37,7 @@ import Profile from './components/Profile';
 import StudentAvailableCourses from './pages/StudentAvailableCourses';
 import PaymentsPage from './pages/PaymentsPage';
 import HomePage from './pages/HomePage';
-
+import ServerWakeup from './components/ServerWakeup';
 
 
 
@@ -74,6 +73,7 @@ function AppWrapper() {
   return (
     <>
       {<Navbar user={user} onLogout={handleLogout} />}
+      <ServerWakeup />
 
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -90,8 +90,8 @@ function AppWrapper() {
         <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
         <Route path="/admin/permissions" element={<ProtectedRoute><AdminPermissions /></ProtectedRoute>} />
         <Route path="/admin/manage-reviews" element={<ProtectedRoute><AdminManageReviews /></ProtectedRoute>} />
-        <Route path="/admin/create-course" element={<CreateCourse />} />
-        <Route path="/admin/create-lesson" element={<CreateLesson />} />
+        <Route path="/admin/create-course" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
+        <Route path="/admin/create-lesson" element={<ProtectedRoute><CreateLesson /></ProtectedRoute>} />
 
 
 
@@ -117,17 +117,10 @@ function AppWrapper() {
         <Route path="/student/progress" element={<ProtectedRoute><StudentProgress /></ProtectedRoute>} />
         <Route path="/student/my-courses" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
         <Route path="/student/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
-        <Route path="/student/payments/:courseId" element={<PaymentPage />} />
-        <Route path="/student/payments" element={<PaymentsPage />} />
+        <Route path="/student/payments/:courseId" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+        <Route path="/student/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
 
-        <Route
-  path="/student/quizzes/:lessonId"
-  element={
-    <ProtectedRoute>
-      <LessonViewer />
-    </ProtectedRoute>
-  }
-/>
+        <Route path="/student/quizzes/:lessonId" element={<ProtectedRoute><Quizzes /></ProtectedRoute>}/>
 
         <Route path="/student/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
         <Route path="/student/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

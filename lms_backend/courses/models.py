@@ -35,7 +35,6 @@ class LessonCompletion(models.Model):
     class Meta:
         unique_together = ('student', 'lesson')
 
-
 class Enrollment(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='enrollments')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')

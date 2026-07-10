@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-// eslint-disable-next-line
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 
@@ -7,10 +6,7 @@ export default function LessonViewer() {
   const { id } = useParams();
 
   const [lesson, setLesson] = useState(null);
-  const [quizzes, setQuizzes] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [scores, setScores] = useState({});
-  const [submitted, setSubmitted] = useState({});
+  const [quizCount, setQuizCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [marking, setMarking] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -24,7 +20,7 @@ export default function LessonViewer() {
         setIsCompleted(lessonRes.data.progress === 100);
 
         const quizRes = await axiosInstance.get(`/api/courses/quizzes/?lesson=${id}`);
-        setQuizzes(quizRes.data);
+        setQuizCount((quizRes.data || []).length);
       } catch (err) {
         console.error('Failed to load lesson or quizzes:', err);
       } finally {
@@ -33,31 +29,6 @@ export default function LessonViewer() {
     };
     loadData();
   }, [id]);
-
-  const handleAnswer = (quizId, questionId, choice) => {
-    setAnswers(prev => ({
-      ...prev,
-      [quizId]: { ...prev[quizId], [questionId]: choice }
-    }));
-  };
-
-  const handleSubmitQuiz = async (quiz) => {
-    const ans = answers[quiz.id] || {};
-    let correct = 0;
-    quiz.questions.forEach(q => {
-      if (ans[q.id] === q.correct_answer) correct++;
-    });
-
-    try {
-      await axiosInstance.post('/api/courses/attempts/', { quiz: quiz.id, score: correct });
-      setScores(prev => ({ ...prev, [quiz.id]: correct }));
-      setSubmitted(prev => ({ ...prev, [quiz.id]: true }));
-      // Quiz submission auto-creates a LessonCompletion on the backend
-      setIsCompleted(true);
-    } catch (err) {
-      console.error('Failed to submit quiz attempt:', err.response?.data || err);
-    }
-  };
 
   const handleMarkComplete = async () => {
     setMarking(true);
@@ -146,8 +117,23 @@ export default function LessonViewer() {
           </div>
         </div>
 
+        {/* Quiz CTA */}
+        {quizCount > 0 && (
+          <div style={styles.quizCta}>
+            <div>
+              <p style={styles.quizCtaTitle}>🧠 Knowledge Check</p>
+              <p style={styles.quizCtaText}>
+                {quizCount} quiz{quizCount !== 1 ? 'zes' : ''} available for this lesson.
+              </p>
+            </div>
+            <Link to={`/student/quizzes/${id}`} style={styles.quizCtaBtn}>
+              {isCompleted ? '↻ Retake Quiz' : 'Take Quiz →'}
+            </Link>
+          </div>
+        )}
+
         {/* Mark complete CTA if no quizzes */}
-        {quizzes.length === 0 && !isCompleted && (
+        {quizCount === 0 && !isCompleted && (
           <div style={styles.completeCta}>
             <p style={styles.ctaText}>Finished reading? Mark this lesson as complete to track your progress.</p>
             <button onClick={handleMarkComplete} disabled={marking} style={styles.ctaBtn}>
@@ -156,83 +142,13 @@ export default function LessonViewer() {
           </div>
         )}
 
-        {isCompleted && quizzes.length === 0 && (
+        {isCompleted && quizCount === 0 && (
           <div style={styles.completedBox}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎉</div>
             <p style={styles.completedText}>You've completed this lesson!</p>
           </div>
         )}
       </div>
-
-      {/* Quizzes */}
-      {quizzes.length > 0 && (
-        <div style={styles.quizSection}>
-          <h2 style={styles.quizSectionTitle}>🧠 Knowledge Check</h2>
-          {quizzes.map(quiz => (
-            <div key={quiz.id} style={styles.quizCard}>
-              <div style={styles.quizHeader}>
-                <h3 style={styles.quizTitle}>{quiz.title}</h3>
-                {submitted[quiz.id] && (
-                  <div style={styles.scoreBadge}>
-                    🏆 {scores[quiz.id]}/{quiz.questions.length}
-                  </div>
-                )}
-              </div>
-
-              {quiz.questions.map((q, qi) => (
-                <div key={q.id} style={styles.questionCard}>
-                  <p style={styles.questionText}>
-                    <span style={styles.questionNum}>Q{qi + 1}.</span> {q.text}
-                  </p>
-                  <div style={styles.optionsGrid}>
-                    {['A', 'B', 'C', 'D'].map(opt => {
-                      const isCorrect = q.correct_answer === opt;
-                      const isSelected = answers[quiz.id]?.[q.id] === opt;
-                      const showAnswer = submitted[quiz.id];
-                      return (
-                        <label key={opt} style={{
-                          ...styles.optionLabel,
-                          ...(isSelected && !showAnswer ? styles.optionSelected : {}),
-                          ...(showAnswer && isCorrect ? styles.optionCorrect : {}),
-                          ...(showAnswer && isSelected && !isCorrect ? styles.optionWrong : {}),
-                          cursor: submitted[quiz.id] ? 'default' : 'pointer',
-                        }}>
-                          <input type="radio"
-                            name={`quiz-${quiz.id}-q-${q.id}`}
-                            value={opt}
-                            checked={isSelected}
-                            onChange={() => handleAnswer(quiz.id, q.id, opt)}
-                            disabled={submitted[quiz.id]}
-                            style={{ display: 'none' }}
-                          />
-                          <span style={styles.optionLetter}>{opt}</span>
-                          <span>{q[`choice_${opt.toLowerCase()}`]}</span>
-                          {showAnswer && isCorrect && <span style={styles.checkIcon}>✔️</span>}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {!submitted[quiz.id] ? (
-                <button style={styles.submitQuizBtn} onClick={() => handleSubmitQuiz(quiz)}>
-                  Submit Quiz 🚀
-                </button>
-              ) : (
-                <div style={{
-                  ...styles.resultBox,
-                  ...(scores[quiz.id] >= quiz.questions.length / 2 ? styles.resultPass : styles.resultFail)
-                }}>
-                  {scores[quiz.id] >= quiz.questions.length / 2
-                    ? '🎉 Great job! You passed!'
-                    : '📖 Good effort! Review the lesson and try again.'}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -288,6 +204,19 @@ const styles = {
   },
   contentBody: {},
   para: { color: '#475569', lineHeight: 1.75, fontSize: '1rem', marginBottom: '1rem' },
+  quizCta: {
+    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex',
+    justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem',
+  },
+  quizCtaTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.25rem' },
+  quizCtaText: { color: '#64748b', margin: 0, fontSize: '0.9rem' },
+  quizCtaBtn: {
+    padding: '0.75rem 1.75rem',
+    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+    color: 'white', borderRadius: '8px', textDecoration: 'none',
+    fontWeight: '700', fontSize: '0.95rem', flexShrink: 0,
+  },
   completeCta: {
     backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.07)', textAlign: 'center',
@@ -304,57 +233,6 @@ const styles = {
     textAlign: 'center', border: '1px solid #bbf7d0',
   },
   completedText: { color: '#166534', fontWeight: '700', fontSize: '1.1rem', margin: 0 },
-  quizSection: { marginTop: '1rem' },
-  quizSectionTitle: {
-    fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: '0 0 1.25rem',
-  },
-  quizCard: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '1.5rem',
-  },
-  quizHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem',
-  },
-  quizTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#1e293b', margin: 0 },
-  scoreBadge: {
-    backgroundColor: '#06b6d4', color: 'white',
-    padding: '0.35rem 1rem', borderRadius: '20px', fontSize: '0.875rem', fontWeight: '700',
-  },
-  questionCard: {
-    borderLeft: '4px solid #e0f2fe', padding: '1rem 1.25rem',
-    marginBottom: '1.25rem', backgroundColor: '#f8fafc', borderRadius: '8px',
-  },
-  questionText: { fontSize: '1rem', color: '#1e293b', marginBottom: '0.75rem' },
-  questionNum: { fontWeight: '800', color: '#06b6d4', marginRight: '0.4rem' },
-  optionsGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem',
-  },
-  optionLabel: {
-    display: 'flex', alignItems: 'center', gap: '0.75rem',
-    padding: '0.85rem 1rem', borderRadius: '8px',
-    backgroundColor: 'white', border: '2px solid #e2e8f0',
-  },
-  optionSelected: { borderColor: '#06b6d4', backgroundColor: '#ecfeff' },
-  optionCorrect: { borderColor: '#22c55e', backgroundColor: '#f0fdf4' },
-  optionWrong: { borderColor: '#f87171', backgroundColor: '#fff5f5' },
-  optionLetter: {
-    width: '28px', height: '28px', borderRadius: '50%',
-    backgroundColor: '#e0f2fe', color: '#0369a1',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: '800', fontSize: '0.85rem', flexShrink: 0,
-  },
-  checkIcon: { marginLeft: 'auto', color: '#22c55e' },
-  submitQuizBtn: {
-    padding: '0.85rem 2rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', border: 'none', borderRadius: '8px',
-    fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
-  },
-  resultBox: {
-    padding: '1rem 1.5rem', borderRadius: '8px', fontWeight: '600', fontSize: '1rem',
-  },
-  resultPass: { backgroundColor: '#f0fdf4', color: '#166534' },
-  resultFail: { backgroundColor: '#eff6ff', color: '#1d4ed8' },
   loadingPage: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc',
