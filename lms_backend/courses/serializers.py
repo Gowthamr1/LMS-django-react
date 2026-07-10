@@ -4,9 +4,9 @@ from django.utils import timezone
 from .models import LessonCompletion
 
 
-
 class LessonSerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField()
+    perfect_score_achieved = serializers.SerializerMethodField() # ✅ MAKE SURE THIS IS HERE
 
     class Meta:
         model = Lesson
@@ -16,20 +16,41 @@ class LessonSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return 100 if LessonCompletion.objects.filter(student=user, lesson=obj).exists() else 0
 
+    # ✅ AND MAKE SURE THIS FUNCTION IS ADDED
+    def get_perfect_score_achieved(self, obj):
+        user = self.context.get('request').user
+        if not user or not user.is_authenticated:
+            return False
+            
+        quizzes = obj.quizzes.all()
+        if not quizzes.exists():
+            return False
+            
+        for quiz in quizzes:
+            total_qs = quiz.questions.count()
+            if total_qs == 0:
+                continue
+            
+            # Check if the user has a 100% score for this quiz
+            has_perfect = QuizAttempt.objects.filter(
+                student=user,
+                quiz=quiz,
+                score=total_qs
+            ).exists()
+            
+            if not has_perfect:
+                return False 
+        
+        return True
+
+
 class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
     is_enrolled = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
-    instructor_name = serializers.ReadOnlyField(source='instructor.username')  # <-- Add this
-    class Meta:
-        model = Course
-        fields = '__all__'
-        read_only_fields = ['instructor', 'created_at', 'lessons']
-    def get_is_enrolled(self, obj):
-        user = self.context['request'].user
-        return user.is_authenticated and obj.enrollments.filter(student=user).exists()
-    
-    
+    instructor_name = serializers.ReadOnlyField(source='instructor.username')
+
+    # ✅ Fixed: removed duplicate class Meta and get_is_enrolled
     class Meta:
         model = Course
         fields = '__all__'
@@ -41,15 +62,13 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         request = self.context.get('request')
-        if obj.image and hasattr(obj.image, 'url'):
+        if obj.image and hasattr(obj.image, 'url') and request:
             return request.build_absolute_uri(obj.image.url)
         return None
 
 
-
-
 class EnrollmentSerializer(serializers.ModelSerializer):
-    course_title = serializers.ReadOnlyField(source='course.title', read_only=True)
+    course_title = serializers.ReadOnlyField(source='course.title')
     student = serializers.ReadOnlyField(source='student.username')
     completed_lessons = serializers.SerializerMethodField()
     total_lessons = serializers.SerializerMethodField()
@@ -59,7 +78,6 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = '__all__'
-        extra_fields = ['course_title', 'student', 'completed_lessons', 'total_lessons', 'first_lesson_id']
 
     def get_completed_lessons(self, obj):
         return LessonCompletion.objects.filter(
@@ -73,19 +91,13 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     def get_first_lesson_id(self, obj):
         first_lesson = obj.course.lessons.order_by('order').first()
         return first_lesson.id if first_lesson else None
-    
-    
+
     def get_last_accessed(self, obj):
-        student = obj.student
-        course = obj.course
         last_completion = LessonCompletion.objects.filter(
-            student=student,
-            lesson__course=course
+            student=obj.student,
+            lesson__course=obj.course
         ).order_by('-completed_on').first()
-        
-        if last_completion:
-            return last_completion.completed_on
-        return None  # If no lessons accessed yet
+        return last_completion.completed_on if last_completion else None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -96,25 +108,26 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = '__all__'
 
+
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ('id', 'quiz', 'text', 'choice_a', 'choice_b', 'choice_c', 'choice_d', 'correct_answer')
-        read_only_fields = ['student', 'taken_on']
-        
+
 
 class QuizSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
+
     class Meta:
         model = Quiz
         fields = ('id', 'lesson', 'title', 'questions')
+
 
 class QuizAttemptSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuizAttempt
         fields = '__all__'
         read_only_fields = ['student', 'taken_on']
-
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -133,16 +146,15 @@ class PaymentSerializer(serializers.ModelSerializer):
         course = validated_data['course']
 
         if Enrollment.objects.filter(student=student, course=course).exists():
-            raise serializers.ValidationError("❌ Already enrolled.")
+            raise serializers.ValidationError("Already enrolled in this course.")
 
         payment = Payment.objects.create(
             student=student,
             course=course,
             amount=course.price,
-            paid=True,  # Mock: assume payment success
+            paid=True,
             paid_on=timezone.now()
         )
-
         Enrollment.objects.create(student=student, course=course)
         return payment
 

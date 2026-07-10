@@ -37,7 +37,6 @@ function Quizzes() {
       await axiosInstance.post('/api/courses/attempts/', { quiz: quiz.id, score: correct });
       setScores(prev => ({ ...prev, [quiz.id]: correct }));
       setSubmitted(prev => ({ ...prev, [quiz.id]: true }));
-      // Quiz submission auto-creates a LessonCompletion on the backend once score >= 70%
     } catch (err) {
       console.error('Failed to submit quiz attempt:', err.response?.data || err);
     }
@@ -71,89 +70,91 @@ function Quizzes() {
           <p style={styles.emptyText}>No quizzes for this lesson yet.</p>
         </div>
       ) : (
-        quizzes.map(quiz => (
-          <div key={quiz.id} style={styles.quizCard}>
-            <div style={styles.quizHeader}>
-              <h3 style={styles.quizTitle}>{quiz.title}</h3>
-              {submitted[quiz.id] && (
-                <div style={styles.scoreBadge}>
-                  🏆 {scores[quiz.id]}/{quiz.questions.length}
+        quizzes.map(quiz => {
+          const total = quiz.questions.length;
+          const score = scores[quiz.id];
+          const isPerfect = submitted[quiz.id] && score === total;
+          const passed = submitted[quiz.id] && total > 0 && (score / total) >= 0.7;
+
+          return (
+            <div key={quiz.id} style={styles.quizCard}>
+              <div style={styles.quizHeader}>
+                <h3 style={styles.quizTitle}>{quiz.title}</h3>
+                {submitted[quiz.id] && (
+                  <div style={{
+                    ...styles.scoreBadge,
+                    backgroundColor: isPerfect ? '#22c55e' : passed ? '#06b6d4' : '#f87171',
+                  }}>
+                    {isPerfect ? '🏆' : '📊'} {score}/{total}
+                  </div>
+                )}
+              </div>
+
+              {quiz.questions.map((q, qi) => (
+                <div key={q.id} style={styles.questionCard}>
+                  <p style={styles.questionText}>
+                    <span style={styles.questionNum}>Q{qi + 1}.</span> {q.text}
+                  </p>
+                  <div style={styles.optionsGrid}>
+                    {['A', 'B', 'C', 'D'].map(opt => {
+                      const isCorrect = q.correct_answer === opt;
+                      const isSelected = answers[quiz.id]?.[q.id] === opt;
+                      const showAnswer = submitted[quiz.id];
+                      return (
+                        <label key={opt} style={{
+                          ...styles.optionLabel,
+                          ...(isSelected && !showAnswer ? styles.optionSelected : {}),
+                          ...(showAnswer && isCorrect ? styles.optionCorrect : {}),
+                          ...(showAnswer && isSelected && !isCorrect ? styles.optionWrong : {}),
+                          cursor: submitted[quiz.id] ? 'default' : 'pointer',
+                        }}>
+                          <input type="radio"
+                            name={`quiz-${quiz.id}-q-${q.id}`}
+                            value={opt}
+                            checked={isSelected}
+                            onChange={() => handleAnswer(quiz.id, q.id, opt)}
+                            disabled={submitted[quiz.id]}
+                            style={{ display: 'none' }}
+                          />
+                          <span style={styles.optionLetter}>{opt}</span>
+                          <span>{q[`choice_${opt.toLowerCase()}`]}</span>
+                          {showAnswer && isCorrect && <span style={styles.checkIcon}>✔️</span>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {!submitted[quiz.id] ? (
+                <button style={styles.submitQuizBtn} onClick={() => handleSubmitQuiz(quiz)}>
+                  Submit Quiz 🚀
+                </button>
+              ) : (
+                <div style={styles.resultArea}>
+                  {/* Result message */}
+                  <div style={{
+                    ...styles.resultBox,
+                    ...(isPerfect ? styles.resultPerfect : passed ? styles.resultPass : styles.resultFail)
+                  }}>
+                    {isPerfect
+                      ? '🎉 Perfect score! You aced this quiz.'
+                      : passed
+                        ? '✅ Passed! (70%+) — Lesson marked complete.'
+                        : '📖 You need 70%+ to pass. Review and try again!'}
+                  </div>
+
+                  {/* ✅ Try Again only shown when NOT perfect score */}
+                  {!isPerfect && (
+                    <button style={styles.tryAgainBtn} onClick={() => handleTryAgain(quiz.id)}>
+                      ↻ Try Again
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-
-            {quiz.questions.map((q, qi) => (
-              <div key={q.id} style={styles.questionCard}>
-                <p style={styles.questionText}>
-                  <span style={styles.questionNum}>Q{qi + 1}.</span> {q.text}
-                </p>
-                <div style={styles.optionsGrid}>
-                  {['A', 'B', 'C', 'D'].map(opt => {
-                    const isCorrect = q.correct_answer === opt;
-                    const isSelected = answers[quiz.id]?.[q.id] === opt;
-                    const showAnswer = submitted[quiz.id];
-                    return (
-                      <label key={opt} style={{
-                        ...styles.optionLabel,
-                        ...(isSelected && !showAnswer ? styles.optionSelected : {}),
-                        ...(showAnswer && isCorrect ? styles.optionCorrect : {}),
-                        ...(showAnswer && isSelected && !isCorrect ? styles.optionWrong : {}),
-                        cursor: submitted[quiz.id] ? 'default' : 'pointer',
-                      }}>
-                        <input type="radio"
-                          name={`quiz-${quiz.id}-q-${q.id}`}
-                          value={opt}
-                          checked={isSelected}
-                          onChange={() => handleAnswer(quiz.id, q.id, opt)}
-                          disabled={submitted[quiz.id]}
-                          style={{ display: 'none' }}
-                        />
-                        <span style={styles.optionLetter}>{opt}</span>
-                        <span>{q[`choice_${opt.toLowerCase()}`]}</span>
-                        {showAnswer && isCorrect && <span style={styles.checkIcon}>✔️</span>}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            {!submitted[quiz.id] ? (
-              <button style={styles.submitQuizBtn} onClick={() => handleSubmitQuiz(quiz)}>
-                Submit Quiz 🚀
-              </button>
-            ) : (
-              <>
-                {(() => {
-                  const total = quiz.questions.length;
-                  const score = scores[quiz.id];
-                  const passed = total > 0 && (score / total) >= 0.7;
-                  const perfect = score === total;
-                  return (
-                    <div style={{
-                      ...styles.resultBox,
-                      ...(passed ? styles.resultPass : styles.resultFail)
-                    }}>
-                      {perfect
-                        ? '🎉 Perfect score! Lesson marked complete.'
-                        : passed
-                          ? '✅ Nice, that\'s a passing score (70%+)! Lesson marked complete — keep trying for full marks.'
-                          : '📖 Good effort! You need 70% or higher to complete this lesson. Review and try again.'}
-                    </div>
-                  );
-                })()}
-                {scores[quiz.id] !== quiz.questions.length && (
-                  <button
-                    style={{ ...styles.submitQuizBtn, marginTop: '1rem', background: 'white', color: '#3b82f6', border: '2px solid #3b82f6' }}
-                    onClick={() => handleTryAgain(quiz.id)}
-                  >
-                    ↻ Try Again
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
@@ -169,14 +170,14 @@ const styles = {
     display: 'inline-block', marginBottom: '1.25rem', color: '#3b82f6',
     fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem',
   },
+  quizSectionTitle: {
+    fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: '0 0 1.25rem',
+  },
   emptyBox: {
     backgroundColor: 'white', borderRadius: '14px', padding: '2.5rem',
     textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
   },
   emptyText: { color: '#64748b', fontSize: '1rem', margin: 0 },
-  quizSectionTitle: {
-    fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: '0 0 1.25rem',
-  },
   quizCard: {
     backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '1.5rem',
@@ -186,8 +187,8 @@ const styles = {
   },
   quizTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#1e293b', margin: 0 },
   scoreBadge: {
-    backgroundColor: '#06b6d4', color: 'white',
-    padding: '0.35rem 1rem', borderRadius: '20px', fontSize: '0.875rem', fontWeight: '700',
+    color: 'white', padding: '0.35rem 1rem',
+    borderRadius: '20px', fontSize: '0.875rem', fontWeight: '700',
   },
   questionCard: {
     borderLeft: '4px solid #e0f2fe', padding: '1rem 1.25rem',
@@ -219,11 +220,19 @@ const styles = {
     color: 'white', border: 'none', borderRadius: '8px',
     fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
   },
+  resultArea: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
   resultBox: {
     padding: '1rem 1.5rem', borderRadius: '8px', fontWeight: '600', fontSize: '1rem',
   },
-  resultPass: { backgroundColor: '#f0fdf4', color: '#166534' },
-  resultFail: { backgroundColor: '#eff6ff', color: '#1d4ed8' },
+  resultPerfect: { backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' },
+  resultPass: { backgroundColor: '#eff6ff', color: '#1d4ed8' },
+  resultFail: { backgroundColor: '#fff7ed', color: '#9a3412' },
+  tryAgainBtn: {
+    padding: '0.75rem 1.75rem', backgroundColor: 'white',
+    color: '#3b82f6', border: '2px solid #3b82f6',
+    borderRadius: '8px', fontSize: '0.95rem',
+    fontWeight: '700', cursor: 'pointer', alignSelf: 'flex-start',
+  },
   loadingPage: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc',

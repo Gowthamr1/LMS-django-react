@@ -117,13 +117,15 @@ export default function LessonViewer() {
           </div>
         </div>
 
-        {/* Quiz CTA */}
-        {quizCount > 0 && (
+        {/* Quiz CTA - Show if they haven't gotten 100% yet */}
+        {quizCount > 0 && !lesson.perfect_score_achieved && (
           <div style={styles.quizCta}>
             <div>
               <p style={styles.quizCtaTitle}>🧠 Knowledge Check</p>
               <p style={styles.quizCtaText}>
-                {quizCount} quiz{quizCount !== 1 ? 'zes' : ''} available for this lesson.
+                {isCompleted 
+                  ? "✅ You passed! Want to try for a perfect score?" 
+                  : `${quizCount} quiz${quizCount !== 1 ? 'zes' : ''} available for this lesson.`}
               </p>
             </div>
             <Link to={`/student/quizzes/${id}`} style={styles.quizCtaBtn}>
@@ -132,13 +134,11 @@ export default function LessonViewer() {
           </div>
         )}
 
-        {/* Mark complete CTA if no quizzes */}
-        {quizCount === 0 && !isCompleted && (
-          <div style={styles.completeCta}>
-            <p style={styles.ctaText}>Finished reading? Mark this lesson as complete to track your progress.</p>
-            <button onClick={handleMarkComplete} disabled={marking} style={styles.ctaBtn}>
-              {marking ? 'Saving...' : '✓ Mark as Complete'}
-            </button>
+        {/* Perfect Score Celebration! - Shows only when they get 100% */}
+        {quizCount > 0 && lesson.perfect_score_achieved && (
+          <div style={styles.completedBox}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🏆</div>
+            <p style={styles.completedText}>Perfect Score! You aced all quizzes in this lesson.</p>
           </div>
         )}
 
