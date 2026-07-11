@@ -205,7 +205,7 @@ const Reviews = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      style={styles.reviewDisplay}
+                      style={{ ...styles.reviewDisplay, flex: 1, display: 'flex', flexDirection: 'column' }}
                     >
                       <div style={styles.starsDisplay}>
                         {[1,2,3,4,5].map(i2 => (
@@ -221,7 +221,7 @@ const Reviews = () => {
                           Reviewed on {new Date(existing.created_at).toLocaleDateString()}
                         </p>
                       )}
-                      <div style={styles.reviewActions}>
+                      <div style={{ ...styles.reviewActions, marginTop: 'auto' }}>
                         <button onClick={() => startEdit(courseId)} style={styles.editBtn}>
                           <Pencil size={14} /> Edit
                         </button>
@@ -241,7 +241,7 @@ const Reviews = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+                      style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
                     >
                       {/* Star rating */}
                       <div>
@@ -264,7 +264,7 @@ const Reviews = () => {
                       </div>
 
                       {/* Text */}
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <label style={styles.label}>Your Review</label>
                         <textarea rows="4" style={styles.textarea}
                           placeholder="What did you love? What could be improved?"
@@ -273,7 +273,7 @@ const Reviews = () => {
                       </div>
 
                       {/* Submit */}
-                      <div style={styles.cardFooter}>
+                      <div style={{ ...styles.cardFooter, marginTop: 'auto' }}>
                         <button
                           onClick={() => handleSubmit(courseId)}
                           disabled={loading || !draft.text || !draft.rating}
@@ -339,7 +339,6 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
     gap: '1.75rem',
     padding: '1rem',
-    alignItems: 'start',
   },
   card: {
     backgroundColor: 'white',
@@ -349,6 +348,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '1.25rem',
+    minHeight: '440px',
     transformStyle: 'preserve-3d',
   },
   cardTop: { display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' },
@@ -388,7 +388,10 @@ const styles = {
     backgroundColor: '#f8fafc', borderRadius: '12px', padding: '1.5rem',
     textAlign: 'center', border: '1px solid #f1f5f9',
   },
-  reviewComment: { color: '#374151', fontSize: '0.95rem', margin: '0.75rem 0', lineHeight: 1.6 },
+  reviewComment: {
+    color: '#374151', fontSize: '0.95rem', margin: '0.75rem 0', lineHeight: 1.6,
+    maxHeight: '6.4em', overflowY: 'auto',
+  },
   reviewDate: { color: '#94a3b8', fontSize: '0.78rem', margin: '0 0 0.75rem' },
   reviewActions: { display: 'flex', gap: '0.6rem', justifyContent: 'center', marginTop: '0.5rem' },
   editBtn: {

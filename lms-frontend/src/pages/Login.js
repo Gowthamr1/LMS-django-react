@@ -70,12 +70,7 @@ function Login() {
 
   useEffect(() => {
     if (user?.role) {
-      const dashboardPath = {
-        admin: '/admin/dashboard',
-        instructor: '/instructor/dashboard',
-        student: '/student/dashboard'
-      }[user.role];
-      navigate(dashboardPath);
+      navigate('/');
     }
   }, [user, navigate]);
 
@@ -100,7 +95,7 @@ function Login() {
       localStorage.setItem('user', JSON.stringify(user));
       setUser?.(user);
 
-      navigate(`/${user.role}/dashboard`);
+      navigate('/');
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.detail || 'Invalid credentials');

@@ -26,10 +26,10 @@ staticfiles/
 **/migrations/*
 !**/migrations/
 !**/migrations/__init__.py
-**/migrations/__pycache__/
+**/__pycache__/
 **/migrations/__pycache__/models.cpython-313.pyc
 **/migrations/__pycache__/serializers.cpython-313.pyc
-
+**/__pycache__/settings.cpython-313.pyc
 ############################################
 # Environment Variables
 # ✅ Keep .env.example so devs know what
