@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Payment
 from .models import Course, Lesson, Enrollment, Review, Quiz, QuizAttempt, Question
@@ -68,6 +69,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return Review.objects.all()
     
     def perform_create(self, serializer):
+        course = serializer.validated_data.get('course')
+        if Review.objects.filter(student=self.request.user, course=course).exists():
+            raise ValidationError({'detail': 'You have already reviewed this course. Edit or delete your existing review instead.'})
         serializer.save(student=self.request.user)
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -96,13 +100,13 @@ class QuizAttemptViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         quiz_attempt = serializer.save(student=self.request.user)
 
-    # Only mark the lesson as completed once the student scores 70% or higher
+        # Only mark the lesson as completed once the student scores 70% or higher
         total_questions = quiz_attempt.quiz.questions.count()
         passed = total_questions > 0 and (quiz_attempt.score / total_questions) >= 0.7
 
         if passed:
-                    lesson = quiz_attempt.quiz.lesson
-                    LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
+            lesson = quiz_attempt.quiz.lesson
+            LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
 
         return quiz_attempt
 
