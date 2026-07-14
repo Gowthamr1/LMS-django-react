@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
+import ServerWakeup from './components/ServerWakeup';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import CourseCatalog from './pages/CourseCatalog';
 import CourseDetail from './pages/CourseDetail';
 // eslint-disable-next-line
 import LessonViewer from './pages/LessonViewer';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
-
+// eslint-disable-next-line
+import AvailableCourses from './pages/AvailableCourses';
 import CreateCourse from './pages/CreateCourse';
 import CreateLesson from './pages/CreateLesson';
 import ManageCourses from './pages/ManageCourses';
@@ -30,14 +33,13 @@ import StudentLessons from './pages/StudentLessons';
 import StudentProgress from './pages/StudentProgress';
 import MyCourses from './pages/MyCourses';
 import PaymentPage from './pages/PaymentPage';
-// eslint-disable-next-line
 import Quizzes from './components/Quizzes';
 import Reviews from './components/Reviews';
 import Profile from './components/Profile';
 import StudentAvailableCourses from './pages/StudentAvailableCourses';
 import PaymentsPage from './pages/PaymentsPage';
 import HomePage from './pages/HomePage';
-import ServerWakeup from './components/ServerWakeup';
+
 
 
 
@@ -81,6 +83,7 @@ function AppWrapper() {
         
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/instructor/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
         <Route path="/instructor/profile" element={<ProtectedRoute><InstructorProfile /></ProtectedRoute>} />
 
@@ -90,8 +93,8 @@ function AppWrapper() {
         <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
         <Route path="/admin/permissions" element={<ProtectedRoute><AdminPermissions /></ProtectedRoute>} />
         <Route path="/admin/manage-reviews" element={<ProtectedRoute><AdminManageReviews /></ProtectedRoute>} />
-        <Route path="/admin/create-course" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
-        <Route path="/admin/create-lesson" element={<ProtectedRoute><CreateLesson /></ProtectedRoute>} />
+        <Route path="/admin/create-course" element={<CreateCourse />} />
+        <Route path="/admin/create-lesson" element={<CreateLesson />} />
 
 
 
@@ -117,10 +120,17 @@ function AppWrapper() {
         <Route path="/student/progress" element={<ProtectedRoute><StudentProgress /></ProtectedRoute>} />
         <Route path="/student/my-courses" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
         <Route path="/student/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
-        <Route path="/student/payments/:courseId" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-        <Route path="/student/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+        <Route path="/student/payments/:courseId" element={<PaymentPage />} />
+        <Route path="/student/payments" element={<PaymentsPage />} />
 
-        <Route path="/student/quizzes/:lessonId" element={<ProtectedRoute><Quizzes /></ProtectedRoute>}/>
+        <Route
+  path="/student/quizzes/:lessonId"
+  element={
+    <ProtectedRoute>
+      <Quizzes />
+    </ProtectedRoute>
+  }
+/>
 
         <Route path="/student/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
         <Route path="/student/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

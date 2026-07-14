@@ -20,7 +20,6 @@ const containerVariants = {
   visible: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
 };
 
-// Cycled per-card accent, same palette used elsewhere in the app
 const ACCENTS = [
   { color: '#06b6d4', bg: '#ecfeff' },
 ];

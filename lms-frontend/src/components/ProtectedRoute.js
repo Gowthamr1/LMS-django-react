@@ -5,7 +5,14 @@ import { AuthContext } from '../contexts/AuthContext';
 
 function ProtectedRoute({ children }) {
   const { user } = useContext(AuthContext);
-  return user ? children : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
+
+  if (!user.is_verified && user.role !== 'admin') {
+    const email = user.email ? `?email=${encodeURIComponent(user.email)}` : '';
+    return <Navigate to={`/verify-email${email}`} replace />;
+  }
+
+  return children;
 }
 
 export default ProtectedRoute;

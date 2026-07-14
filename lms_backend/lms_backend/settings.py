@@ -28,6 +28,20 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+# ── Email (Brevo SMTP) ──────────────────────────────────────────────
+# All values come from env vars — never hardcode SMTP credentials.
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER',)          # Brevo SMTP login (usually your Brevo account email)
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # Brevo SMTP key, NOT your account password
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'onlinelms4@gmail.com')
+
+# Used to build links inside emails (verification, "view course", etc.)
+# since the backend doesn't otherwise know where the deployed frontend lives.
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
@@ -54,6 +68,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',   # Simple JWT for auth
     'users',                      # custom user app
     'courses', 
+    'emailer',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +94,7 @@ ROOT_URLCONF = 'lms_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -131,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.jwt_authentication.VerifiedJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',

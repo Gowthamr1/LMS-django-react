@@ -26,6 +26,12 @@ axiosInstance.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
+
+    if (error.response?.status === 401 && error.response.data?.code === 'email_not_verified') {
+      localStorage.clear();
+      window.location.href = '/verify-email';
+      return Promise.reject(error);
+    }
  
     if (
       error.response &&

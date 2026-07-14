@@ -4,19 +4,19 @@ from .models import User
 
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ('id', 'username', 'email', 'role', 'is_staff', 'is_active')
-    list_filter = ('role', 'is_staff', 'is_active')
+    list_display = ('id', 'username', 'email', 'role', 'is_verified', 'is_staff', 'is_active')
+    list_filter = ('role', 'is_verified', 'is_staff', 'is_active')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Role Info', {'fields': ('role',)}),
+        ('Role Info', {'fields': ('role', 'is_verified')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'role', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('username', 'email', 'role', 'is_verified', 'password1', 'password2', 'is_staff', 'is_active')}
         ),
     )
     search_fields = ('username', 'email')

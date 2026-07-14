@@ -1,0 +1,18 @@
+{% extends "emails/base_email.html" %}
+{% block title %}Welcome to LMS{% endblock %}
+{% block content %}
+    <h1 style="margin:0 0 16px; color:#1e293b; font-size:22px;">Welcome, {{ user.username }}!</h1>
+    <p style="margin:0 0 20px; color:#475569; font-size:15px; line-height:1.6;">
+        Thanks for joining LMS. You're all set to start
+        {% if user.role == 'instructor' %}creating and managing courses{% else %}learning at your own pace{% endif %}.
+    </p>
+    <p style="margin:0 0 16px; color:#475569; font-size:15px; line-height:1.6;">
+        Please confirm your email address by entering this verification code in LMS:
+    </p>
+    <p style="margin:0 0 24px; color:#1e293b; font-size:30px; font-weight:700; letter-spacing:8px;">
+        {{ otp }}
+    </p>
+    <p style="margin:0; color:#94a3b8; font-size:13px; line-height:1.6;">
+        This code expires in {{ expiry_minutes }} minutes. Do not share it with anyone.
+    </p>
+{% endblock %}

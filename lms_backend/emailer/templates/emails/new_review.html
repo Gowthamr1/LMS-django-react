@@ -1,0 +1,25 @@
+{% extends "emails/base_email.html" %}
+{% block title %}New review{% endblock %}
+{% block content %}
+    <h1 style="margin:0 0 16px; color:#1e293b; font-size:22px;">New review on {{ course.title }} ⭐</h1>
+    <p style="margin:0 0 16px; color:#475569; font-size:15px; line-height:1.6;">
+    Hi {{ instructor.username }}, {{ review.student.username }} left a review:
+    </p>
+    <div style="background-color:#f8fafc; border-radius:8px; padding:16px 20px; margin:0 0 24px;">
+    <p style="margin:0 0 8px; color:#f59e0b; font-size:16px;">
+        {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+    </p>
+    {% if review.comment %}
+        <p style="margin:0; color:#374151; font-size:14px; line-height:1.6;">"{{ review.comment }}"</p>
+    {% endif %}
+    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="border-radius:10px; background:linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); background-color:#3b82f6;">
+        <a href="{{ reviews_url }}" style="display:inline-block; padding:14px 28px; color:#ffffff; font-weight:700; font-size:15px; text-decoration:none;">
+            View All Reviews
+        </a>
+        </td>
+    </tr>
+    </table>
+{% endblock %}

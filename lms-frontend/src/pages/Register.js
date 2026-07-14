@@ -94,8 +94,7 @@ function Register() {
       );
 
       if (result.success) {
-        setSuccess('Account created! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 1500);
+        navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
       } else {
         // Show the actual DRF error (field-level messages)
         setError(result.error || 'Registration failed. Please try again.');

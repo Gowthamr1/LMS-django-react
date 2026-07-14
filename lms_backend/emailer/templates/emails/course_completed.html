@@ -1,0 +1,23 @@
+{% extends "emails/base_email.html" %}
+{% block title %}Course completed{% endblock %}
+{% block content %}
+    <h1 style="margin:0 0 16px; color:#1e293b; font-size:22px;">Congratulations, {{ user.username }}! 🏆</h1>
+    <p style="margin:0 0 20px; color:#475569; font-size:15px; line-height:1.6;">
+    You've completed every lesson in:
+    </p>
+    <div style="background-color:#f0fdf4; border-left:4px solid #22c55e; border-radius:8px; padding:16px 20px; margin:0 0 24px;">
+    <p style="margin:0; color:#166534; font-size:17px; font-weight:700;">{{ course.title }}</p>
+    </div>
+    <p style="margin:0 0 24px; color:#475569; font-size:15px; line-height:1.6;">
+    Great work! Ready to keep the momentum going?
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="border-radius:10px; background:linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); background-color:#3b82f6;">
+        <a href="{{ browse_url }}" style="display:inline-block; padding:14px 28px; color:#ffffff; font-weight:700; font-size:15px; text-decoration:none;">
+            Browse More Courses
+        </a>
+        </td>
+    </tr>
+    </table>
+{% endblock %}
