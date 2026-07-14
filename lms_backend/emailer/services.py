@@ -15,7 +15,9 @@ Design notes:
 """
 import logging
 import secrets
+import json
 from datetime import timedelta
+from urllib import error, request
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.conf import settings
@@ -48,6 +50,9 @@ def _send(subject, template_name, context, to_email):
         html_body = render_to_string(f'emails/{template_name}.html', context)
         text_body = strip_tags(html_body)
 
+        if settings.BREVO_API_KEY:
+            return _send_via_brevo_api(subject, html_body, text_body, to_email)
+
         msg = EmailMultiAlternatives(
             subject=subject,
             body=text_body,
@@ -60,6 +65,40 @@ def _send(subject, template_name, context, to_email):
     except Exception:
         logger.exception("Failed to send email '%s' to %s", subject, to_email)
         return False
+
+
+def _send_via_brevo_api(subject, html_body, text_body, to_email):
+    """Send through Brevo's HTTPS API, avoiding blocked SMTP ports."""
+    payload = {
+        'sender': {
+            'email': settings.DEFAULT_FROM_EMAIL,
+            'name': settings.BREVO_SENDER_NAME,
+        },
+        'to': [{'email': to_email}],
+        'subject': subject,
+        'htmlContent': html_body,
+        'textContent': text_body,
+    }
+    api_request = request.Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'accept': 'application/json',
+            'api-key': settings.BREVO_API_KEY,
+            'content-type': 'application/json',
+        },
+        method='POST',
+    )
+    try:
+        with request.urlopen(api_request, timeout=settings.BREVO_API_TIMEOUT) as response:
+            if 200 <= response.status < 300:
+                return True
+            logger.error('Brevo API returned HTTP %s for %s', response.status, to_email)
+    except error.HTTPError as exc:
+        logger.error('Brevo API returned HTTP %s for %s', exc.code, to_email)
+    except Exception:
+        logger.exception('Brevo API request failed for %s', to_email)
+    return False
 
 
 # ── Verification tokens ──────────────────────────────────────────────

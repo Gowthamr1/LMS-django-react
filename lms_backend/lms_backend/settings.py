@@ -39,6 +39,12 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER',)          # Brevo SMTP login (usu
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # Brevo SMTP key, NOT your account password
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'onlinelms4@gmail.com')
 
+# Prefer Brevo's HTTPS API in production. This works on hosts that block
+# outbound SMTP ports (including Render's free web services).
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+BREVO_API_TIMEOUT = int(os.getenv('BREVO_API_TIMEOUT', '15'))
+BREVO_SENDER_NAME = os.getenv('BREVO_SENDER_NAME', 'LMS')
+
 # Used to build links inside emails (verification, "view course", etc.)
 # since the backend doesn't otherwise know where the deployed frontend lives.
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
