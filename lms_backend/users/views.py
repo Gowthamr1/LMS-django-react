@@ -116,7 +116,12 @@ def register_user(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    send_welcome_email(pending)
+    if not send_welcome_email(pending):
+        return Response(
+            {'detail': 'We could not send a verification code. Please try again shortly.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
     return Response({
         'message': 'Verification code sent. Your account will be created after verification.',
         'requires_email_verification': True,
@@ -176,8 +181,11 @@ def resend_verification_email(request):
         return Response({'detail': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     pending = PendingRegistration.objects.filter(email__iexact=email).first()
-    if pending:
-        send_welcome_email(pending)
+    if pending and not send_welcome_email(pending):
+        return Response(
+            {'detail': 'We could not send a verification code. Please try again shortly.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
     return Response({
         'detail': 'If this email belongs to an unverified account, a new code has been sent.'

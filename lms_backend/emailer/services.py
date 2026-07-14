@@ -116,13 +116,17 @@ def validate_verification_otp(user, otp):
 
 def send_welcome_email(user):
     """Register → welcome email containing a one-time verification code."""
-    otp = create_verification_otp(user)
-    return _send(
-        subject="Welcome to LMS! 🎉",
-        template_name='welcome',
-        context={'user': user, 'otp': otp, 'expiry_minutes': OTP_EXPIRY_MINUTES},
-        to_email=user.email,
-    )
+    try:
+        otp = create_verification_otp(user)
+        return _send(
+            subject="Welcome to LMS! 🎉",
+            template_name='welcome',
+            context={'user': user, 'otp': otp, 'expiry_minutes': OTP_EXPIRY_MINUTES},
+            to_email=user.email,
+        )
+    except Exception:
+        logger.exception("Failed to create a verification OTP for %s", user.email)
+        return False
 
 
 def send_verification_success_email(user):
