@@ -1,6 +1,9 @@
 from django.urls import path
 from .views import get_user_info, list_all_users, UserDetailView, admin_dashboard_stats
-from .views import register_user, verify_email, resend_verification_email
+from .views import (
+    change_password_with_otp, register_user, request_password_change_otp,
+    resend_verification_email, verify_email,
+)
 
 
 urlpatterns = [
@@ -11,4 +14,6 @@ urlpatterns = [
     path('register/', register_user),
     path('verify-email/', verify_email),
     path('resend-verification-email/', resend_verification_email),
+    path('password-change/request-otp/', request_password_change_otp),
+    path('password-change/', change_password_with_otp),
 ]

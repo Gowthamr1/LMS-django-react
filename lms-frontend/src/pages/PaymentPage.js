@@ -34,7 +34,13 @@ export default function PaymentPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
-      await axiosInstance.post('/api/courses/payments/', { course: courseId });
+      await axiosInstance.post(
+        '/api/courses/payments/',
+        { course: courseId },
+        // The backend also sends transactional emails for a new enrollment.
+        // Allow enough time for a Render cold start and those safe sends.
+        { timeout: 60000 },
+      );
       setMessage('🎉 Payment successful! Redirecting...');
       setTimeout(() => navigate('/student/my-courses'), 2000);
     } catch (err) {
@@ -63,9 +69,6 @@ export default function PaymentPage() {
       </style>
 
       <div style={styles.header}>
-        {course?.thumbnail && (
-          <img src={course.thumbnail} alt="Course thumbnail" style={styles.thumbnail} />
-        )}
         <h1 style={styles.title}>{course?.title || 'Course Enrollment'}</h1>
         {course && (
           <div style={styles.priceTag}>

@@ -63,6 +63,9 @@ function StudentProgress() {
               ? Math.round((enroll.completed_lessons / enroll.total_lessons) * 100)
               : 0;
             const progressColor = pct === 100 ? '#22c55e' : pct >= 50 ? '#06b6d4' : '#3b82f6';
+            const lessonToOpen = enroll.completed
+              ? enroll.first_lesson_id
+              : (enroll.next_lesson_id || enroll.first_lesson_id);
 
             return (
               <div key={enroll.id} style={styles.card}>
@@ -115,8 +118,8 @@ function StudentProgress() {
                   </div>
                 </div>
 
-                {enroll.first_lesson_id ? (
-                  <Link to={`/lesson/${enroll.first_lesson_id}`} style={styles.continueBtn}>
+                {lessonToOpen ? (
+                  <Link to={`/lesson/${lessonToOpen}`} style={styles.continueBtn}>
                     {enroll.completed ? '🔁 Review' : '▶ Continue'}
                   </Link>
                 ) : (

@@ -2,6 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 
+function getEmbedUrl(videoUrl) {
+  if (!videoUrl) return null;
+
+  try {
+    const url = new URL(videoUrl);
+    const host = url.hostname.replace(/^www\./, '');
+
+    if (host === 'youtu.be') {
+      return `https://www.youtube-nocookie.com/embed/${url.pathname.slice(1)}`;
+    }
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const videoId = url.searchParams.get('v');
+      if (videoId) return `https://www.youtube-nocookie.com/embed/${videoId}`;
+      if (url.pathname.startsWith('/embed/')) return videoUrl;
+    }
+    if (host === 'vimeo.com' && /^\/\d+$/.test(url.pathname)) {
+      return `https://player.vimeo.com/video${url.pathname}`;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export default function LessonViewer() {
   const { id } = useParams();
 
@@ -56,6 +81,10 @@ export default function LessonViewer() {
     </div>
   );
 
+  const imageSource = lesson.image_url || lesson.image;
+  const videoSource = lesson.video_url || lesson.video;
+  const embeddedVideoUrl = getEmbedUrl(videoSource);
+
   return (
     <div style={styles.page}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -94,16 +123,26 @@ export default function LessonViewer() {
       {/* Content */}
       <div style={styles.contentArea}>
         {/* Image */}
-        {lesson.image && (
+        {imageSource && (
           <div style={styles.mediaBox}>
-            <img src={lesson.image} alt={lesson.title} style={styles.lessonImage} />
+            <img src={imageSource} alt={lesson.title} style={styles.lessonImage} />
           </div>
         )}
 
         {/* Video */}
-        {lesson.video && (
+        {videoSource && (
           <div style={styles.mediaBox}>
-            <video src={lesson.video} style={styles.videoPlayer} controls />
+            {embeddedVideoUrl ? (
+              <iframe
+                src={embeddedVideoUrl}
+                title={`${lesson.title} video`}
+                style={styles.videoPlayer}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video src={videoSource} style={styles.videoPlayer} controls />
+            )}
           </div>
         )}
 

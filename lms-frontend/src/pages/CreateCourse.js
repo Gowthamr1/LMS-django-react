@@ -5,6 +5,9 @@ function CreateCourse() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [duration, setDuration] = useState('6 Weeks');
+  const [difficulty, setDifficulty] = useState('Beginner');
+  const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
@@ -24,6 +27,9 @@ function CreateCourse() {
     formData.append('title', title);
     formData.append('description', description);
     formData.append('price', price);
+    formData.append('duration', duration);
+    formData.append('difficulty', difficulty);
+    if (imageUrl.trim()) formData.append('external_image_url', imageUrl.trim());
     if (imageFile) formData.append('image', imageFile);
 
     try {
@@ -31,7 +37,7 @@ function CreateCourse() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setMessage('✅ Course created successfully!');
-      setTitle(''); setDescription(''); setPrice(''); setImageFile(null); setPreviewUrl('');
+      setTitle(''); setDescription(''); setPrice(''); setDuration('6 Weeks'); setDifficulty('Beginner'); setImageUrl(''); setImageFile(null); setPreviewUrl('');
     } catch (error) {
       let msg = '❌ Failed to create course.';
       if (error.response?.status === 401) msg = '❌ Unauthorized. Please login again.';
@@ -81,8 +87,39 @@ function CreateCourse() {
             </div>
           </div>
 
+          <div style={styles.selectRow}>
+            <div style={{ ...styles.group, flex: 1 }}>
+              <label style={styles.label}>Course Duration</label>
+              <select style={styles.input} value={duration} onChange={e => setDuration(e.target.value)}>
+                {['2 Weeks', '4 Weeks', '6 Weeks', '8 Weeks', '12 Weeks'].map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ ...styles.group, flex: 1 }}>
+              <label style={styles.label}>Difficulty</label>
+              <select style={styles.input} value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+                {['Beginner', 'Intermediate', 'Advanced'].map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div style={styles.group}>
-            <label style={styles.label}>Course Thumbnail</label>
+            <label style={styles.label}>Course Thumbnail URL (recommended for Render)</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={event => { setImageUrl(event.target.value); setPreviewUrl(event.target.value || ''); }}
+              style={styles.input}
+              placeholder="https://.../course-thumbnail.jpg"
+            />
+            <p style={styles.helpText}>Use a public direct image URL. It takes priority over an uploaded image.</p>
+          </div>
+
+          <div style={styles.group}>
+            <label style={styles.label}>Course Thumbnail Upload (local only)</label>
             <input type="file" accept="image/*" onChange={handleImageChange} style={styles.fileInput} />
             {previewUrl ? (
               <img src={previewUrl} alt="Preview" style={styles.preview} />
@@ -122,6 +159,8 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
   },
   group: { marginBottom: '1.5rem' },
+  selectRow: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
+  helpText: { margin: '0.45rem 0 0', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.45 },
   label: { display: 'block', fontWeight: '600', color: '#374151', marginBottom: '0.5rem', fontSize: '0.95rem' },
   input: {
     width: '100%', padding: '0.8rem', border: '1px solid #e2e8f0',

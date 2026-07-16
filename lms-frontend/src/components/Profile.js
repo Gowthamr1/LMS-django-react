@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
+import ChangePassword from './ChangePassword';
 
 function Profile() {
   const [profile, setProfile] = useState(null);
@@ -74,6 +75,8 @@ function Profile() {
           <div style={styles.statLabel}>In Progress</div>
         </div>
       </div>
+
+      <ChangePassword />
 
       {/* Enrollments */}
       <div style={styles.section}>

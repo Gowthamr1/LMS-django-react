@@ -1,27 +1,66 @@
 import axios from 'axios';
- 
+
 const baseURL = process.env.REACT_APP_API_URL;
- 
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 30 * 1000;
+let refreshPromise = null;
+
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 5000,
+  // Render can take 10-30 seconds to wake and Neon can take a moment to
+  // establish its first connection. Five seconds causes false failures.
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
     accept: 'application/json',
   },
 });
- 
-// ✅ Attach token on every request, not just at import time.
-// This fixes the bug where components loaded before login had no Authorization header.
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+
+function accessTokenExpiresSoon(token) {
+  try {
+    const encodedPayload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(encodedPayload.padEnd(Math.ceil(encodedPayload.length / 4) * 4, '=')));
+    return !payload.exp || payload.exp * 1000 <= Date.now() + ACCESS_TOKEN_REFRESH_BUFFER_MS;
+  } catch {
+    // Let the response interceptor handle a malformed token consistently.
+    return false;
   }
+}
+
+function refreshAccessToken() {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return Promise.reject(new Error('No refresh token is available.'));
+
+  // Concurrent page requests share a single refresh instead of each sending
+  // an expired access token and producing multiple 401 responses.
+  if (!refreshPromise) {
+    refreshPromise = axios.post(`${baseURL}/api/token/refresh/`, { refresh: refreshToken })
+      .then(response => {
+        const newAccess = response.data.access;
+        localStorage.setItem('access_token', newAccess);
+        return newAccess;
+      })
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+// Refresh close-to-expiry tokens before the protected request is sent.
+// This prevents the visible 401-then-retry sequence in the browser console.
+axiosInstance.interceptors.request.use(async config => {
+  let token = localStorage.getItem('access_token');
+  if (token && accessTokenExpiresSoon(token)) {
+    try {
+      token = await refreshAccessToken();
+    } catch (error) {
+      localStorage.clear();
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
+  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
- 
-// ✅ On 401, attempt token refresh once, then redirect to login on failure.
+
 axiosInstance.interceptors.response.use(
   response => response,
   async error => {
@@ -32,40 +71,35 @@ axiosInstance.interceptors.response.use(
       window.location.href = '/verify-email';
       return Promise.reject(error);
     }
- 
+
+    // Keep a reactive retry as a fallback for tokens revoked before their
+    // expiry timestamp. Normally the request interceptor avoids this path.
     if (
-      error.response &&
-      error.response.status === 401 &&
-      error.response.data.code === 'token_not_valid' &&
-      !originalRequest._retry  // prevent infinite retry loop
+      error.response?.status === 401 &&
+      error.response.data?.code === 'token_not_valid' &&
+      originalRequest &&
+      !originalRequest._retry
     ) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refresh_token');
- 
-      if (refreshToken) {
-        try {
-          const tokenResponse = await axios.post(`${baseURL}/api/token/refresh/`, {
-            refresh: refreshToken,
-          });
- 
-          const newAccess = tokenResponse.data.access;
-          localStorage.setItem('access_token', newAccess);
-          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
- 
-          return axiosInstance(originalRequest);
-        } catch (err) {
-          console.error('Refresh token invalid. Logging out...');
-          localStorage.clear();
-          window.location.href = '/login';
-        }
-      } else {
+      try {
+        const newAccess = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
         localStorage.clear();
         window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
- 
+
+    // Do not leave a stale profile in the app after any other 401 response.
+    if (error.response?.status === 401) {
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+
     return Promise.reject(error);
   }
 );
- 
+
 export default axiosInstance;

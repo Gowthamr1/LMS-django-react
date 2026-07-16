@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from .models import Payment
 from .models import Course, Lesson, Enrollment, Review, Quiz, QuizAttempt, Question
@@ -18,6 +18,34 @@ from emailer.services import (
     send_course_completed_email,
     send_new_review_email,
 )
+
+
+def _is_instructor_or_admin(user):
+    return user.is_superuser or user.role in ('instructor', 'admin')
+
+
+def _ensure_course_owner(user, course):
+    """Allow admins to manage any course, but instructors only their own."""
+    if not user.is_superuser and user.role != 'admin' and course.instructor_id != user.id:
+        raise PermissionDenied('You can only manage content in your own courses.')
+
+
+class IsInstructorOrAdmin(permissions.BasePermission):
+    message = 'Only instructors can manage course content.'
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and _is_instructor_or_admin(request.user))
+
+
+class IsStudentOrAdmin(permissions.BasePermission):
+    message = 'Only students can perform this action.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (request.user.is_superuser or request.user.role in ('student', 'admin'))
+        )
 
 
 def _check_and_mark_course_completed(student, lesson):
@@ -51,7 +79,11 @@ class CourseViewSet(viewsets.ModelViewSet):
     CRUD for Course. Only instructors (or admin) create courses; everyone can list/view.
     """
     serializer_class = CourseSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsInstructorOrAdmin()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
@@ -65,18 +97,42 @@ class CourseViewSet(viewsets.ModelViewSet):
 class LessonViewSet(viewsets.ModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsInstructorOrAdmin()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
+        course_id = self.request.query_params.get('course')
+
         if user.role == 'instructor':
-            return Lesson.objects.filter(course__instructor=user)
-        return Lesson.objects.all()
+            queryset = Lesson.objects.filter(course__instructor=user)
+        else:
+            queryset = Lesson.objects.all()
+        return queryset.filter(course_id=course_id) if course_id else queryset
+
+    def perform_create(self, serializer):
+        course = serializer.validated_data['course']
+        _ensure_course_owner(self.request.user, course)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        course = serializer.validated_data.get('course', serializer.instance.course)
+        _ensure_course_owner(self.request.user, course)
+        serializer.save()
     
 
 class EnrollmentViewSet(viewsets.ModelViewSet):
     serializer_class = EnrollmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsStudentOrAdmin()]
+        if self.action in ('update', 'partial_update', 'destroy'):
+            return [permissions.IsAdminUser()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
@@ -87,15 +143,41 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         return Enrollment.objects.all()
 
     def perform_create(self, serializer):
+        if self.request.user.role != 'student' and not self.request.user.is_superuser:
+            raise PermissionDenied('Only students can enroll in a course.')
+        course = serializer.validated_data['course']
+
+        if Enrollment.objects.filter(student=self.request.user, course=course).exists():
+            raise ValidationError({'detail': 'Already enrolled in this course.'})
+
+        # Paid courses can only be enrolled through the payment endpoint.
+        # Free courses keep the direct-enrollment path.
+        if course.price > 0 and not Payment.objects.filter(
+            student=self.request.user,
+            course=course,
+            paid=True,
+        ).exists():
+            raise ValidationError({'detail': 'Complete payment before enrolling in this course.'})
+
         serializer.save(student=self.request.user)
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsStudentOrAdmin()]
+        return [permissions.IsAuthenticated()]
     
     def get_queryset(self):
         user = self.request.user
         course_id = self.request.query_params.get('course')
+
+        # Instructors can only view reviews for courses they own, even if a
+        # course filter is supplied from the browser.
+        if user.role == 'instructor':
+            queryset = Review.objects.filter(course__instructor=user)
+            return queryset.filter(course_id=course_id).order_by('-created_at') if course_id else queryset
 
         # Course-detail page: anyone authenticated can see every review left on a
         # given course. This only applies to the list action with ?course=<id> —
@@ -104,13 +186,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.action == 'list' and course_id:
             return Review.objects.filter(course_id=course_id).order_by('-created_at')
 
-        if user.role == 'instructor':
-            return Review.objects.filter(course__instructor=user)
-        elif user.role == 'student':
+        if user.role == 'student':
             return Review.objects.filter(student=user)
         return Review.objects.all()
     
     def perform_create(self, serializer):
+        if self.request.user.role != 'student' and not self.request.user.is_superuser:
+            raise PermissionDenied('Only students can leave reviews.')
         course = serializer.validated_data.get('course')
         if Review.objects.filter(student=self.request.user, course=course).exists():
             raise ValidationError({'detail': 'You have already reviewed this course. Edit or delete your existing review instead.'})
@@ -120,14 +202,29 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsInstructorOrAdmin()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.user.role == 'instructor':
+            qs = qs.filter(lesson__course__instructor=self.request.user)
         lesson_id = self.request.query_params.get('lesson')
         if lesson_id:
             qs = qs.filter(lesson_id=lesson_id)
         return qs
+
+    def perform_create(self, serializer):
+        _ensure_course_owner(self.request.user, serializer.validated_data['lesson'].course)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        lesson = serializer.validated_data.get('lesson', serializer.instance.lesson)
+        _ensure_course_owner(self.request.user, lesson.course)
+        serializer.save()
 
 
 from .models import LessonCompletion
@@ -158,9 +255,27 @@ class QuizAttemptViewSet(viewsets.ModelViewSet):
     
 
 class QuestionViewSet(viewsets.ModelViewSet):
-    queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsInstructorOrAdmin()]
+        return [permissions.IsAuthenticated()]
+
+    def get_queryset(self):
+        queryset = Question.objects.all()
+        if self.request.user.role == 'instructor':
+            return queryset.filter(quiz__lesson__course__instructor=self.request.user)
+        return queryset
+
+    def perform_create(self, serializer):
+        _ensure_course_owner(self.request.user, serializer.validated_data['quiz'].lesson.course)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        quiz = serializer.validated_data.get('quiz', serializer.instance.quiz)
+        _ensure_course_owner(self.request.user, quiz.lesson.course)
+        serializer.save()
 
 
 @api_view(['GET'])
@@ -184,6 +299,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         payment = serializer.save(student=self.request.user)
+
+        # A retry returns the existing paid record. Do not send duplicate
+        # receipts or enrollment notifications for that safe retry.
+        if not getattr(payment, 'payment_was_created', False):
+            return
+
         send_payment_receipt_email(payment)
 
         # PaymentSerializer.create() creates the Enrollment as part of the

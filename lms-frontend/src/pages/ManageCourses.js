@@ -65,9 +65,9 @@ function ManageCourses() {
               >
                 {/* Course Image */}
                 <div style={styles.imageContainer}>
-                  {course.image ? (
+                  {course.image_url ? (
                     <img
-                      src={course.image}
+                      src={course.image_url}
                       alt={course.title}
                       style={styles.image}
                     />
@@ -94,6 +94,12 @@ function ManageCourses() {
 
                   <div style={styles.meta}>
                     <span style={styles.metaItem}>
+                      ⏱ {course.duration}
+                    </span>
+                    <span style={styles.metaItem}>
+                      🎯 {course.difficulty}
+                    </span>
+                    <span style={styles.metaItem}>
                       📅 {new Date(course.created_at).toLocaleDateString()}
                     </span>
                     <span style={styles.metaItem}>
@@ -111,7 +117,7 @@ function ManageCourses() {
                     📖 Manage Lessons
                   </Link>
                   <Link
-                    to="/instructor/create-lesson"
+                    to={`/instructor/create-lesson?courseId=${course.id}`}
                     style={styles.addLessonButton}
                   >
                     ➕ Add Lesson

@@ -2,19 +2,30 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from django.contrib.auth.hashers import make_password
+import secrets
+from datetime import timedelta
+
+from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
-from .models import PendingRegistration, User
+from .models import PasswordChangeOTP, PendingRegistration, User
 from .serializers import UserSerializer
 from courses.models import Course, Review, Enrollment
+from django.utils import timezone
 from django.utils.timezone import now
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from emailer.services import (
     send_welcome_email,
     send_verification_success_email,
+    send_password_change_otp,
     validate_verification_otp,
 )
+
+
+PASSWORD_CHANGE_OTP_EXPIRY_MINUTES = 10
+PASSWORD_CHANGE_OTP_MAX_ATTEMPTS = 5
 
 
 @api_view(['GET'])
@@ -27,6 +38,7 @@ def get_user_info(request):
         "email": user.email,
         "role": user.role or "student",  # fallback to student
         "is_verified": user.is_verified,
+        "date_joined": user.date_joined,
     })
 
 
@@ -190,3 +202,78 @@ def resend_verification_email(request):
     return Response({
         'detail': 'If this email belongs to an unverified account, a new code has been sent.'
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def request_password_change_otp(request):
+    """Validate the current password, then email a short-lived confirmation code."""
+    old_password = request.data.get('old_password', '')
+    if not old_password or not request.user.check_password(old_password):
+        return Response({'detail': 'Your current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    otp = f'{secrets.randbelow(1_000_000):06d}'
+    PasswordChangeOTP.objects.update_or_create(
+        user=request.user,
+        defaults={
+            'otp_hash': make_password(otp),
+            'expires_at': timezone.now() + timedelta(minutes=PASSWORD_CHANGE_OTP_EXPIRY_MINUTES),
+            'attempts': 0,
+        },
+    )
+
+    if not send_password_change_otp(request.user, otp):
+        PasswordChangeOTP.objects.filter(user=request.user).delete()
+        return Response(
+            {'detail': 'We could not send a password-change code. Please try again shortly.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    return Response({'detail': 'A six-digit confirmation code was sent to your email.'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_with_otp(request):
+    """Require both the current password and a valid emailed OTP before changing it."""
+    old_password = request.data.get('old_password', '')
+    new_password = request.data.get('new_password', '')
+    otp = request.data.get('otp', '').strip()
+
+    if not old_password or not new_password or not otp:
+        return Response(
+            {'detail': 'Current password, new password, and confirmation code are required.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not request.user.check_password(old_password):
+        return Response({'detail': 'Your current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        password_validation.validate_password(new_password, request.user)
+    except DjangoValidationError as error:
+        return Response({'new_password': list(error.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        password_otp = PasswordChangeOTP.objects.get(user=request.user)
+    except PasswordChangeOTP.DoesNotExist:
+        return Response({'detail': 'Request a new confirmation code first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if timezone.now() > password_otp.expires_at:
+        password_otp.delete()
+        return Response({'detail': 'This confirmation code has expired. Request a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+    if password_otp.attempts >= PASSWORD_CHANGE_OTP_MAX_ATTEMPTS:
+        password_otp.delete()
+        return Response({'detail': 'Too many incorrect codes. Request a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not otp.isdigit() or len(otp) != 6 or not check_password(otp, password_otp.otp_hash):
+        password_otp.attempts += 1
+        password_otp.save(update_fields=['attempts', 'created_at'])
+        remaining = PASSWORD_CHANGE_OTP_MAX_ATTEMPTS - password_otp.attempts
+        return Response(
+            {'detail': f'Incorrect confirmation code. {remaining} attempt(s) remaining.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    request.user.set_password(new_password)
+    request.user.save(update_fields=['password'])
+    password_otp.delete()
+    return Response({'detail': 'Password changed successfully. Please log in again.'})

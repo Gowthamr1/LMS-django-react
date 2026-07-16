@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import ChangePassword from '../components/ChangePassword';
 
 function InstructorProfile() {
   const [profile, setProfile] = useState(null);
@@ -9,17 +10,20 @@ function InstructorProfile() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const userRes = await axiosInstance.get('/api/users/me/');
+      const [userRes, courseRes, enrollmentRes] = await Promise.all([
+        axiosInstance.get('/api/users/me/'),
+        axiosInstance.get('/api/courses/courses/'),
+        axiosInstance.get('/api/courses/enrollments/'),
+      ]);
       setProfile(userRes.data);
 
-      const courseRes = await axiosInstance.get('/api/courses/courses/');
-      const instructorCourses = courseRes.data.filter(
-        course => course.instructor === userRes.data.id
-      );
-      const totalStudents = instructorCourses.reduce(
-        (acc, course) => acc + (course.enrollments?.length || 0), 0
-      );
-      setStats({ courses: instructorCourses.length, students: totalStudents });
+      // The backend already scopes both endpoints to the signed-in instructor.
+      // CourseSerializer does not include reverse enrollment relations, so use
+      // the enrollment endpoint rather than always showing a false zero.
+      setStats({
+        courses: courseRes.data.length,
+        students: enrollmentRes.data.length,
+      });
     } catch (err) {
       console.error('Failed to load instructor profile info:', err);
     } finally {
@@ -86,6 +90,8 @@ function InstructorProfile() {
           <div style={styles.statLabel}>Enrolled Students</div>
         </div>
       </div>
+
+      <ChangePassword />
 
       {/* Refresh */}
       <div style={{ textAlign: 'center', marginTop: '1rem' }}>

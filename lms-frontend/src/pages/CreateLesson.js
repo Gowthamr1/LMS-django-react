@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 
 function CreateLesson() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [courses, setCourses] = useState([]);
-  const [formData, setFormData] = useState({ courseId: '', title: '', content: '', order: 1, image: null, video: null });
+  const [formData, setFormData] = useState({
+    courseId: searchParams.get('courseId') || '', title: '', content: '', order: 1,
+    image: null, video: null, imageUrl: '', videoUrl: '',
+  });
   const [previewImage, setPreviewImage] = useState(null);
   const [videoName, setVideoName] = useState('');
   const [message, setMessage] = useState('');
@@ -26,6 +30,7 @@ function CreateLesson() {
       if (name === 'video') setVideoName(file.name);
       setFormData(prev => ({ ...prev, [name]: file }));
     } else {
+      if (name === 'imageUrl') setPreviewImage(value || null);
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
@@ -41,12 +46,14 @@ function CreateLesson() {
     payload.append('order', formData.order);
     if (formData.image) payload.append('image', formData.image);
     if (formData.video) payload.append('video', formData.video);
+    if (formData.imageUrl.trim()) payload.append('image_url', formData.imageUrl.trim());
+    if (formData.videoUrl.trim()) payload.append('video_url', formData.videoUrl.trim());
 
     try {
       await axiosInstance.post('/api/courses/lessons/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
       setMessage('✅ Lesson created successfully!');
       setTimeout(() => navigate(`/instructor/manage-lessons/${formData.courseId}`), 1500);
-      setFormData({ courseId: '', title: '', content: '', order: 1, image: null, video: null });
+      setFormData({ courseId: '', title: '', content: '', order: 1, image: null, video: null, imageUrl: '', videoUrl: '' });
       setPreviewImage(null); setVideoName('');
     } catch (error) {
       const errMsg = error.response?.data ? Object.values(error.response.data).flat().join(' ') : 'Failed to create lesson.';
@@ -103,7 +110,14 @@ function CreateLesson() {
           </div>
 
           <div style={styles.group}>
-            <label style={styles.label}>Lesson Video</label>
+            <label style={styles.label}>Video URL (recommended for Render)</label>
+            <input name="videoUrl" type="url" style={styles.input} value={formData.videoUrl}
+              onChange={handleChange} placeholder="https://.../lesson.mp4 or a YouTube/Vimeo URL" />
+            <p style={styles.helpText}>Use a public direct video URL, YouTube, or Vimeo. A URL takes priority over an uploaded file.</p>
+          </div>
+
+          <div style={styles.group}>
+            <label style={styles.label}>Lesson Video Upload (local only)</label>
             <input type="file" name="video" accept="video/*" onChange={handleChange} style={styles.fileInput} />
             {videoName && (
               <div style={styles.fileTag}>🎬 {videoName}</div>
@@ -111,7 +125,14 @@ function CreateLesson() {
           </div>
 
           <div style={styles.group}>
-            <label style={styles.label}>Lesson Image (optional)</label>
+            <label style={styles.label}>Image URL (recommended for Render)</label>
+            <input name="imageUrl" type="url" style={styles.input} value={formData.imageUrl}
+              onChange={handleChange} placeholder="https://.../lesson-image.jpg" />
+            <p style={styles.helpText}>Use a public direct image URL. A URL takes priority over an uploaded image.</p>
+          </div>
+
+          <div style={styles.group}>
+            <label style={styles.label}>Lesson Image Upload (local only)</label>
             <input type="file" name="image" accept="image/*" onChange={handleChange} style={styles.fileInput} />
             {previewImage ? (
               <img src={previewImage} alt="Preview" style={styles.preview} />
@@ -154,6 +175,7 @@ const styles = {
     borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box', fontFamily: 'inherit',
   },
   fileInput: { display: 'block', marginBottom: '0.75rem', fontSize: '0.95rem' },
+  helpText: { margin: '0.45rem 0 0', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.45 },
   fileTag: {
     display: 'inline-block', backgroundColor: '#eff6ff', color: '#3b82f6',
     padding: '0.35rem 0.8rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600',

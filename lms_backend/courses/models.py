@@ -4,11 +4,28 @@ from django.conf import settings
 
 
 class Course(models.Model):
+    DURATION_CHOICES = (
+        ('2 Weeks', '2 Weeks'),
+        ('4 Weeks', '4 Weeks'),
+        ('6 Weeks', '6 Weeks'),
+        ('8 Weeks', '8 Weeks'),
+        ('12 Weeks', '12 Weeks'),
+    )
+    DIFFICULTY_CHOICES = (
+        ('Beginner', 'Beginner'),
+        ('Intermediate', 'Intermediate'),
+        ('Advanced', 'Advanced'),
+    )
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='courses')
     price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    duration = models.CharField(max_length=20, choices=DURATION_CHOICES, default='6 Weeks')
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='Beginner')
     image = models.ImageField(upload_to='course_images/', blank=True, null=True)  # <-- Add this
+    # A public URL persists across Render restarts; it is preferred over image.
+    external_image_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
 
@@ -23,6 +40,10 @@ class Lesson(models.Model):
     order = models.IntegerField(default=0)
     image = models.ImageField(upload_to='lesson_images/', null=True, blank=True)
     video = models.FileField(upload_to='lesson_videos/', null=True, blank=True)
+    # External media persists across Render restarts. URL media is preferred
+    # over uploaded files by the student lesson viewer.
+    image_url = models.URLField(blank=True)
+    video_url = models.URLField(blank=True)
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"

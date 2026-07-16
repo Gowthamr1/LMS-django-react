@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Course, Lesson, Enrollment, Review, Quiz, Question, QuizAttempt, Payment
 from django.utils import timezone
+from django.db import transaction
 from .models import LessonCompletion
 
 
@@ -61,6 +62,8 @@ class CourseSerializer(serializers.ModelSerializer):
         return user.is_authenticated and obj.enrollments.filter(student=user).exists()
 
     def get_image_url(self, obj):
+        if obj.external_image_url:
+            return obj.external_image_url
         request = self.context.get('request')
         if obj.image and hasattr(obj.image, 'url') and request:
             return request.build_absolute_uri(obj.image.url)
@@ -74,6 +77,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     total_lessons = serializers.SerializerMethodField()
     last_accessed = serializers.SerializerMethodField()
     first_lesson_id = serializers.SerializerMethodField()
+    next_lesson_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
@@ -89,8 +93,19 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         return obj.course.lessons.count()
 
     def get_first_lesson_id(self, obj):
-        first_lesson = obj.course.lessons.order_by('order').first()
+        first_lesson = obj.course.lessons.order_by('order', 'id').first()
         return first_lesson.id if first_lesson else None
+
+    def get_next_lesson_id(self, obj):
+        """Return the first course lesson the student has not completed yet."""
+        completed_lesson_ids = LessonCompletion.objects.filter(
+            student=obj.student,
+            lesson__course=obj.course,
+        ).values('lesson_id')
+        next_lesson = obj.course.lessons.exclude(
+            id__in=completed_lesson_ids
+        ).order_by('order', 'id').first()
+        return next_lesson.id if next_lesson else None
 
     def get_last_accessed(self, obj):
         last_completion = LessonCompletion.objects.filter(
@@ -145,17 +160,30 @@ class PaymentSerializer(serializers.ModelSerializer):
         student = self.context['request'].user
         course = validated_data['course']
 
-        if Enrollment.objects.filter(student=student, course=course).exists():
-            raise serializers.ValidationError("Already enrolled in this course.")
+        # The current payment screen is a mock payment flow. If a browser
+        # loses a successful response and retries, return the paid record
+        # rather than showing a false failure or blocking the student.
+        with transaction.atomic():
+            payment = Payment.objects.filter(
+                student=student,
+                course=course,
+                paid=True,
+            ).order_by('id').first()
 
-        payment = Payment.objects.create(
-            student=student,
-            course=course,
-            amount=course.price,
-            paid=True,
-            paid_on=timezone.now()
-        )
-        Enrollment.objects.create(student=student, course=course)
+            if payment:
+                Enrollment.objects.get_or_create(student=student, course=course)
+                payment.payment_was_created = False
+                return payment
+
+            payment = Payment.objects.create(
+                student=student,
+                course=course,
+                amount=course.price,
+                paid=True,
+                paid_on=timezone.now(),
+            )
+            Enrollment.objects.get_or_create(student=student, course=course)
+            payment.payment_was_created = True
         return payment
 
     def to_representation(self, instance):

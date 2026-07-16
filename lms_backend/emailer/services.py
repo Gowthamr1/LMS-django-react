@@ -248,3 +248,13 @@ def send_new_review_email(review):
         },
         to_email=instructor.email,
     )
+
+
+def send_password_change_otp(user, otp):
+    """Send the one-time code required to change an authenticated user's password."""
+    return _send(
+        subject="Your LMS password change code",
+        template_name='password_change_otp',
+        context={'user': user, 'otp': otp, 'expiry_minutes': OTP_EXPIRY_MINUTES},
+        to_email=user.email,
+    )

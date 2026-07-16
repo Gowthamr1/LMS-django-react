@@ -5,7 +5,7 @@ import { AuthContext } from '../contexts/AuthContext';
 
 function ProtectedRoute({ children }) {
   const { user } = useContext(AuthContext);
-  if (!user) return <Navigate to="/login" />;
+  if (!user || !localStorage.getItem('access_token')) return <Navigate to="/login" replace />;
 
   if (!user.is_verified && user.role !== 'admin') {
     const email = user.email ? `?email=${encodeURIComponent(user.email)}` : '';
