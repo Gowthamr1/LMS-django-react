@@ -87,7 +87,7 @@ function HomePage() {
   }
 
   return (
-    <div style={{ ...styles.container, backgroundColor: theme.isDark ? '#f8fafc' : '#ffffff' }}>
+    <div style={styles.container}>
       <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
 
       {/* Hero */}
