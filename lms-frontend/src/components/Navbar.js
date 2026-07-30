@@ -66,6 +66,7 @@ function Navbar() {
             <Link to="/student/dashboard" style={linkStyle}>Dashboard</Link>
             <Link to="/student/browse" style={linkStyle}>Available Courses</Link>
             <Link to="/student/my-courses" style={linkStyle}>My Courses</Link>
+            <Link to="/student/certificates" style={linkStyle}>Certificates</Link>
             <Link to="/student/payments" style={linkStyle}>Payments</Link>
             <Link to="/student/reviews" style={linkStyle}>Reviews</Link>
             <Link to="/student/profile" style={linkStyle}>Profile</Link>

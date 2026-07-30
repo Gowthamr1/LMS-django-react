@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, PlayCircle, TrendingUp } from 'lucide-react';
+import ReactBitsParticles from '../../components/ReactBitsParticles';
 
 // ── Animation variants ────────────────────────────────────────────
 const headerVariants = {
@@ -50,6 +51,7 @@ const cards = [
 function StudentDashboard() {
   return (
     <div style={styles.container}>
+      <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
 
       {/* Header — fades in from top */}
       <motion.div
@@ -81,6 +83,7 @@ function StudentDashboard() {
               transition: { duration: 0.25, ease: 'easeOut' },
             }}
             whileTap={{ scale: 0.97 }}
+            className="liquid-glass-card"
             style={{ ...styles.card, border: `1px solid ${iconColor}22` }}
           >
             <Link to={to} style={styles.cardLink}>
@@ -107,6 +110,8 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     minHeight: '100vh',
     perspective: '1200px',
+    position: 'relative',
+    isolation: 'isolate',
   },
   header: {
     textAlign: 'center',

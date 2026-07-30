@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function AdminManageReviews() {
   const [reviews, setReviews] = useState([]);
@@ -62,7 +63,7 @@ function AdminManageReviews() {
       </div>
 
       {loading ? (
-        <div style={styles.loading}>Loading reviews...</div>
+        <LmsLoader title="Loading reviews" subtitle="Preparing moderation tools" size="lg" />
       ) : error ? (
         <div style={styles.error}>{error}</div>
       ) : reviews.length === 0 ? (

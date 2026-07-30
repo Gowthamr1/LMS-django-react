@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function StudentEnrollments() {
   const [enrollments, setEnrollments] = useState([]);
@@ -21,7 +22,7 @@ function StudentEnrollments() {
     <div style={{ padding: '20px' }}>
       <h2>Your Enrolled Courses</h2>
       {loading ? (
-        <p>Loading...</p>
+        <LmsLoader title="Loading enrollments" subtitle="Preparing your courses" size="lg" />
       ) : enrollments.length === 0 ? (
         <p>You are not enrolled in any courses.</p>
       ) : (

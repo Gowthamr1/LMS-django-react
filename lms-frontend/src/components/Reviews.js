@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Star, Pencil, Trash2, X } from 'lucide-react';
+import LmsLoader from './LmsLoader';
 
 // ── Animation variants (matches StudentDashboard) ──────────────────
 const headerVariants = {
@@ -145,7 +146,7 @@ const Reviews = () => {
       </motion.div>
 
       {fetching ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading reviews" subtitle="Preparing your feedback workspace" size="lg" />
       ) : enrollments.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>📚</div>
@@ -186,7 +187,8 @@ const Reviews = () => {
                   boxShadow: `0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.06), 0 20px 36px ${accent.color}33`,
                   transition: { duration: 0.25, ease: 'easeOut' },
                 }}
-                style={{ ...styles.card, border: `1px solid ${accent.color}22` }}
+                className="liquid-glass-card"
+            style={{ ...styles.card, border: `1px solid ${accent.color}22` }}
               >
                 {/* Course name */}
                 <div style={styles.cardTop}>

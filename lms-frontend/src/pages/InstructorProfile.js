@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import ChangePassword from '../components/ChangePassword';
+import LmsLoader from '../components/LmsLoader';
 
 function InstructorProfile() {
   const [profile, setProfile] = useState(null);
@@ -36,11 +37,7 @@ function InstructorProfile() {
   }, []);
 
   if (loading) return (
-    <div style={styles.loading}>
-      <div style={styles.spinner}></div>
-      <p style={styles.loadingText}>Loading Your Profile...</p>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    <div style={styles.loading}><LmsLoader title="Loading your profile" subtitle="Preparing your instructor workspace" size="lg" /></div>
   );
 
   return (
@@ -50,7 +47,7 @@ function InstructorProfile() {
       {/* Header — matches Student Profile gradient layout */}
       <div style={styles.header}>
         <h1 style={styles.title}>👩‍🏫 Instructor Profile</h1>
-        <div style={styles.profileCard}>
+        <div className="liquid-glass-card" style={styles.profileCard}>
           {profile ? (
             <>
               <div style={styles.avatar}>
@@ -79,12 +76,12 @@ function InstructorProfile() {
 
       {/* Stats Section */}
       <div style={styles.statsRow}>
-        <div style={styles.statCard}>
+        <div className="liquid-glass-card" style={styles.statCard}>
           <div style={styles.statIcon}>📚</div>
           <div style={styles.statValue}>{stats.courses}</div>
           <div style={styles.statLabel}>Courses Created</div>
         </div>
-        <div style={styles.statCard}>
+        <div className="liquid-glass-card" style={styles.statCard}>
           <div style={styles.statIcon}>👥</div>
           <div style={styles.statValue}>{stats.students}</div>
           <div style={styles.statLabel}>Enrolled Students</div>

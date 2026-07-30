@@ -39,6 +39,9 @@ import Profile from './components/Profile';
 import StudentAvailableCourses from './pages/StudentAvailableCourses';
 import PaymentsPage from './pages/PaymentsPage';
 import HomePage from './pages/HomePage';
+import CertificatesPage from './pages/CertificatesPage';
+import CertificateVerification from './pages/CertificateVerification';
+import CertificateDetailPage from './pages/CertificateDetailPage';
 
 
 
@@ -84,6 +87,7 @@ function AppWrapper() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-certificate/:certificateId" element={<CertificateVerification />} />
         <Route path="/instructor/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
         <Route path="/instructor/profile" element={<ProtectedRoute><InstructorProfile /></ProtectedRoute>} />
 
@@ -122,6 +126,8 @@ function AppWrapper() {
         <Route path="/student/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
         <Route path="/student/payments/:courseId" element={<PaymentPage />} />
         <Route path="/student/payments" element={<PaymentsPage />} />
+        <Route path="/student/certificates" element={<ProtectedRoute><CertificatesPage /></ProtectedRoute>} />
+        <Route path="/student/certificates/:certificateId" element={<ProtectedRoute><CertificateDetailPage /></ProtectedRoute>} />
 
         <Route
   path="/student/quizzes/:lessonId"

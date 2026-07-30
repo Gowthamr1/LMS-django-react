@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from './LmsLoader';
 
 function Quizzes() {
   const { lessonId } = useParams();
@@ -53,11 +54,7 @@ function Quizzes() {
   };
 
   if (loading) return (
-    <div style={styles.loadingPage}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={styles.spinner}></div>
-      <p style={styles.loadingText}>Loading quiz...</p>
-    </div>
+    <div style={styles.loadingPage}><LmsLoader title="Loading quiz" subtitle="Preparing your knowledge check" size="lg" /></div>
   );
 
   return (
@@ -77,7 +74,7 @@ function Quizzes() {
           const passed = submitted[quiz.id] && total > 0 && (score / total) >= 0.7;
 
           return (
-            <div key={quiz.id} style={styles.quizCard}>
+            <div key={quiz.id} className="liquid-glass-card" style={styles.quizCard}>
               <div style={styles.quizHeader}>
                 <h3 style={styles.quizTitle}>{quiz.title}</h3>
                 {submitted[quiz.id] && (
@@ -91,7 +88,7 @@ function Quizzes() {
               </div>
 
               {quiz.questions.map((q, qi) => (
-                <div key={q.id} style={styles.questionCard}>
+                <div key={q.id} className="liquid-glass-card" style={styles.questionCard}>
                   <p style={styles.questionText}>
                     <span style={styles.questionNum}>Q{qi + 1}.</span> {q.text}
                   </p>

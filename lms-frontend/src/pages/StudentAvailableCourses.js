@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import LmsLoader from '../components/LmsLoader';
 
 export default function StudentAvailableCourses() {
   const [courses, setCourses] = useState([]);
@@ -46,7 +47,7 @@ export default function StudentAvailableCourses() {
       <h2>Available Courses</h2>
       {message && <p>{message}</p>}
       {loading ? (
-        <p>Loading...</p>
+        <LmsLoader title="Loading courses" subtitle="Finding available courses" size="lg" />
       ) : courses.length === 0 ? (
         <p>No courses available.</p>
       ) : (

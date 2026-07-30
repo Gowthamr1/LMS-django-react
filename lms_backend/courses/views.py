@@ -1,15 +1,20 @@
+from decimal import Decimal
+
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
 from .models import Payment
-from .models import Course, Lesson, Enrollment, Review, Quiz, QuizAttempt, Question
+from .models import Course, Lesson, Enrollment, Review, Quiz, QuizAttempt, Question, Certificate
 from .serializers import (
     CourseSerializer, LessonSerializer, EnrollmentSerializer,
-    ReviewSerializer, QuizSerializer, QuizAttemptSerializer, PaymentSerializer
+    ReviewSerializer, QuizSerializer, QuizAttemptSerializer, PaymentSerializer,
+    CertificateSerializer,
 )
 from .serializers import QuestionSerializer
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import LessonCompletion
 from emailer.services import (
     send_enrollment_confirmation_email,
@@ -18,6 +23,7 @@ from emailer.services import (
     send_course_completed_email,
     send_new_review_email,
 )
+from .certificate_pdf import generate_certificate_pdf
 
 
 def _is_instructor_or_admin(user):
@@ -69,8 +75,16 @@ def _check_and_mark_course_completed(student, lesson):
 
     enrollment = Enrollment.objects.filter(student=student, course=course).first()
     if enrollment and not enrollment.completed:
+        # A paid course must have a successful payment before it can earn a
+        # certificate. Free courses do not require a Payment record.
+        if Decimal(str(course.price)) > Decimal('0') and not Payment.objects.filter(
+            student=student, course=course, paid=True
+        ).exists():
+            return
+
         enrollment.completed = True
         enrollment.save(update_fields=['completed'])
+        Certificate.objects.get_or_create(enrollment=enrollment)
         send_course_completed_email(enrollment)
 
 
@@ -240,14 +254,29 @@ class QuizAttemptViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         quiz_attempt = serializer.save(student=self.request.user)
 
-        # Only mark the lesson as completed once the student scores 70% or higher
+        # A quiz is passed at 70% or higher. A lesson is complete only after
+        # every quiz attached to that lesson has been passed, so a certificate
+        # cannot be earned by passing just one of several required quizzes.
         total_questions = quiz_attempt.quiz.questions.count()
         passed = total_questions > 0 and (quiz_attempt.score / total_questions) >= 0.7
 
         if passed:
             lesson = quiz_attempt.quiz.lesson
-            LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
-            _check_and_mark_course_completed(self.request.user, lesson)
+            all_lesson_quizzes_passed = True
+            for lesson_quiz in lesson.quizzes.all():
+                question_count = lesson_quiz.questions.count()
+                has_passing_attempt = question_count > 0 and QuizAttempt.objects.filter(
+                    student=self.request.user,
+                    quiz=lesson_quiz,
+                    score__gte=(question_count * 0.7),
+                ).exists()
+                if not has_passing_attempt:
+                    all_lesson_quizzes_passed = False
+                    break
+
+            if all_lesson_quizzes_passed:
+                LessonCompletion.objects.get_or_create(student=self.request.user, lesson=lesson)
+                _check_and_mark_course_completed(self.request.user, lesson)
 
         return quiz_attempt
 
@@ -290,6 +319,53 @@ def check_enrollment(request, course_id):
     return Response({'enrolled': enrolled})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_certificates(request):
+    """Return the authenticated student's issued, active certificates."""
+    certificates = Certificate.objects.filter(
+        enrollment__student=request.user,
+        is_revoked=False,
+    ).select_related('enrollment__student', 'enrollment__course__instructor').order_by('-issued_at')
+    return Response(CertificateSerializer(certificates, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_certificate(request, certificate_id):
+    certificate = get_object_or_404(
+        Certificate.objects.select_related('enrollment__student', 'enrollment__course__instructor'),
+        certificate_id=certificate_id,
+        is_revoked=False,
+    )
+    if certificate.enrollment.student_id != request.user.id and not request.user.is_staff:
+        raise PermissionDenied('You can only download your own certificate.')
+
+    pdf = generate_certificate_pdf(certificate)
+    return FileResponse(
+        pdf,
+        # React receives this authenticated response as a Blob and opens it
+        # in the browser PDF viewer. Marking it as an attachment lets IDM
+        # intercept/cancel the XHR response, leaving the viewer blank.
+        as_attachment=False,
+        filename=f'LMS-Certificate-{certificate.certificate_id}.pdf',
+        content_type='application/pdf',
+    )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_certificate(request, certificate_id):
+    """Public endpoint used by the PDF QR code and employers/recruiters."""
+    certificate = get_object_or_404(
+        Certificate.objects.select_related('enrollment__student', 'enrollment__course__instructor'),
+        certificate_id=certificate_id,
+    )
+    data = CertificateSerializer(certificate).data
+    data['valid'] = not certificate.is_revoked
+    return Response(data)
+
+
 class PaymentViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -329,27 +405,3 @@ def user_profile(request):
         'email': user.email,
         'role': user.role,
     })
-    
-    
-    # ADD these imports at the top of courses/views.py (if not already there):
-# from .models import LessonCompletion
-
-# ADD this new view to courses/views.py:
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def mark_lesson_complete(request, lesson_id):
-    """
-    Manually mark a lesson as complete.
-    Called when student clicks 'Mark as Complete' in LessonViewer.
-    Lessons with quizzes get marked automatically on quiz submit,
-    but lessons WITHOUT quizzes need this endpoint.
-    """
-    try:
-        lesson = Lesson.objects.get(id=lesson_id)
-    except Lesson.DoesNotExist:
-        return Response({'detail': 'Lesson not found.'}, status=404)
-
-    LessonCompletion.objects.get_or_create(student=request.user, lesson=lesson)
-    _check_and_mark_course_completed(request.user, lesson)
-    return Response({'status': 'completed'})

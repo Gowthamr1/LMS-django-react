@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import LmsLoader from '../components/LmsLoader';
 
 function ManageCourses() {
   const [courses, setCourses] = useState([]);
@@ -38,10 +39,7 @@ function ManageCourses() {
 
       {/* Loading */}
       {loading ? (
-        <div style={styles.emptyBox}>
-          <div style={styles.spinner}></div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
+        <LmsLoader title="Loading your courses" subtitle="Preparing course management" size="lg" />
       ) : courses.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>📭</div>
@@ -61,7 +59,7 @@ function ManageCourses() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08, duration: 0.35 }}
-                style={styles.card}
+                className="liquid-glass-card" style={styles.card}
               >
                 {/* Course Image */}
                 <div style={styles.imageContainer}>

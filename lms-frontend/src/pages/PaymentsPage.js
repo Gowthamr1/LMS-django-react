@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -52,7 +53,7 @@ const PaymentsPage = () => {
       </div>
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading payments" subtitle="Retrieving your payment history" size="lg" />
       ) : error ? (
         <div style={styles.errorBox}>⚠️ {error}</div>
       ) : payments.length === 0 ? (
@@ -62,7 +63,7 @@ const PaymentsPage = () => {
           <p style={styles.emptyText}>Enroll in a course to get started!</p>
         </div>
       ) : (
-        <div style={styles.tableCard}>
+        <div className="liquid-glass-card" style={styles.tableCard}>
           <div style={styles.tableWrap}>
             <table style={styles.table}>
               <thead>

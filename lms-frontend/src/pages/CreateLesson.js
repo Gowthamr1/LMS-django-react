@@ -70,7 +70,7 @@ function CreateLesson() {
         <p style={styles.subheading}>Add a lesson with content, video, and media</p>
       </div>
 
-      <div style={styles.card}>
+      <div className="liquid-glass-card" style={styles.card}>
         {message && (
           <div style={{ ...styles.alert, ...(message.startsWith('✅') ? styles.alertSuccess : styles.alertError) }}>
             {message}

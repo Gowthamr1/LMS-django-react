@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import LmsLoader from '../components/LmsLoader';
 
 function CourseCatalog() {
   const { getToken } = useContext(AuthContext);
@@ -39,7 +40,7 @@ function CourseCatalog() {
       });
   }, [getToken]);
 
-  if (loading) return <p>Loading courses...</p>;
+  if (loading) return <LmsLoader title="Loading courses" subtitle="Finding courses for you" size="lg" />;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (

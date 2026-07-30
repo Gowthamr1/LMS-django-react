@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Lesson, Enrollment, Review, Quiz, Question, QuizAttempt, Payment
+from .models import Course, Lesson, Enrollment, Review, Quiz, Question, QuizAttempt, Payment, Certificate
 from django.utils import timezone
 from django.db import transaction
 from .models import LessonCompletion
@@ -78,6 +78,8 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     last_accessed = serializers.SerializerMethodField()
     first_lesson_id = serializers.SerializerMethodField()
     next_lesson_id = serializers.SerializerMethodField()
+    certificate_id = serializers.SerializerMethodField()
+    certificate_issued_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
@@ -113,6 +115,36 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             lesson__course=obj.course
         ).order_by('-completed_on').first()
         return last_completion.completed_on if last_completion else None
+
+    def get_certificate_id(self, obj):
+        certificate = getattr(obj, 'certificate', None)
+        if certificate and not certificate.is_revoked:
+            return str(certificate.certificate_id)
+        return None
+
+    def get_certificate_issued_at(self, obj):
+        certificate = getattr(obj, 'certificate', None)
+        if certificate and not certificate.is_revoked:
+            return certificate.issued_at
+        return None
+
+
+class CertificateSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    course_title = serializers.ReadOnlyField(source='enrollment.course.title')
+    instructor_name = serializers.ReadOnlyField(source='enrollment.course.instructor.username')
+
+    class Meta:
+        model = Certificate
+        fields = (
+            'certificate_id', 'issued_at', 'is_revoked', 'student_name',
+            'course_title', 'instructor_name',
+        )
+
+    def get_student_name(self, obj):
+        student = obj.enrollment.student
+        full_name = f'{student.first_name} {student.last_name}'.strip()
+        return full_name or student.username
 
 
 class ReviewSerializer(serializers.ModelSerializer):

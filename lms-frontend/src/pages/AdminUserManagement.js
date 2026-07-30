@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function AdminUserManagement() {
   const [users, setUsers] = useState([]);
@@ -39,13 +40,13 @@ function AdminUserManagement() {
       <h2 style={styles.header}>Manage Users</h2>
       
       {loading ? (
-        <div style={styles.loading}>Loading users...</div>
+        <LmsLoader title="Loading users" subtitle="Preparing user management" size="lg" />
       ) : error ? (
         <div style={styles.error}>{error}</div>
       ) : users.length === 0 ? (
         <div style={styles.empty}>No users found.</div>
       ) : (
-        <div style={styles.tableContainer}>
+        <div className="liquid-glass-card" style={styles.tableContainer}>
           <table style={styles.table}>
             <thead>
               <tr>

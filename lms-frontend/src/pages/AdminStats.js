@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function AdminStats() {
   const [stats, setStats] = useState({ users: 0, courses: 0, enrollments: 0 });
@@ -47,7 +48,7 @@ function AdminStats() {
       </div>
 
       {loading ? (
-        <div style={styles.loading}>Loading statistics...</div>
+        <LmsLoader title="Loading statistics" subtitle="Calculating platform analytics" size="lg" />
       ) : (
         <>
           {error && <div style={styles.error}>{error}</div>}
@@ -79,7 +80,7 @@ function AdminStats() {
 }
 
 const StatCard = ({ icon, title, value, trend }) => (
-  <div style={styles.card}>
+  <div className="liquid-glass-card" style={styles.card}>
     <div style={styles.cardIcon}>{icon}</div>
     <div style={styles.cardContent}>
       <h3 style={styles.cardTitle}>{title}</h3>

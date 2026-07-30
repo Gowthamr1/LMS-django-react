@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function ManageLessons() {
   const { courseId } = useParams();
@@ -90,7 +91,7 @@ function ManageLessons() {
       {error && <div style={styles.errorBox}>{error}</div>}
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading lessons" subtitle="Preparing your course content" size="lg" />
       ) : lessons.length === 0 ? (
         <div style={styles.emptyBox}>
           <h3 style={styles.emptyTitle}>No lessons yet</h3>
@@ -100,7 +101,7 @@ function ManageLessons() {
       ) : (
         <div style={styles.list}>
           {lessons.slice().sort((a, b) => a.order - b.order).map((lesson, index) => (
-            <div key={lesson.id} style={styles.card}>
+            <div key={lesson.id} className="liquid-glass-card" style={styles.card}>
               <div style={styles.orderBadge}>{lesson.order}</div>
               <div style={styles.cardBody}>
                 <h3 style={styles.lessonTitle}>{lesson.title}</h3>

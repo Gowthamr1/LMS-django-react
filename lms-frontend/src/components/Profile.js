@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import ChangePassword from './ChangePassword';
+import LmsLoader from './LmsLoader';
 
 function Profile() {
   const [profile, setProfile] = useState(null);
@@ -25,11 +26,7 @@ function Profile() {
   const inProgressCount = enrollments.length - completedCount;
 
   if (loading) return (
-    <div style={styles.loadingPage}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={styles.spinner}></div>
-      <p style={styles.loadingText}>Loading your profile...</p>
-    </div>
+    <div style={styles.loadingPage}><LmsLoader title="Loading your profile" subtitle="Getting your learning details ready" size="lg" /></div>
   );
 
   return (
@@ -39,7 +36,7 @@ function Profile() {
       {/* Header / Profile Card */}
       <div style={styles.header}>
         <h1 style={styles.pageTitle}>🎓 My Profile</h1>
-        <div style={styles.profileCard}>
+        <div className="liquid-glass-card" style={styles.profileCard}>
           {profile ? (
             <>
               <div style={styles.avatar}>
@@ -59,17 +56,17 @@ function Profile() {
 
       {/* Stats row */}
       <div style={styles.statsRow}>
-        <div style={styles.statCard}>
+        <div className="liquid-glass-card" style={styles.statCard}>
           <div style={styles.statIcon}>📚</div>
           <div style={styles.statValue}>{enrollments.length}</div>
           <div style={styles.statLabel}>Enrolled</div>
         </div>
-        <div style={styles.statCard}>
+        <div className="liquid-glass-card" style={styles.statCard}>
           <div style={styles.statIcon}>✅</div>
           <div style={styles.statValue}>{completedCount}</div>
           <div style={styles.statLabel}>Completed</div>
         </div>
-        <div style={styles.statCard}>
+        <div className="liquid-glass-card" style={styles.statCard}>
           <div style={styles.statIcon}>📖</div>
           <div style={styles.statValue}>{inProgressCount}</div>
           <div style={styles.statLabel}>In Progress</div>
@@ -93,7 +90,7 @@ function Profile() {
               const pct = enroll.total_lessons > 0
                 ? Math.round((enroll.completed_lessons / enroll.total_lessons) * 100) : 0;
               return (
-                <div key={enroll.id} style={styles.courseCard}>
+                <div key={enroll.id} className="liquid-glass-card" style={styles.courseCard}>
                   <div style={styles.courseCardTop}>
                     <div style={styles.courseIcon}>📘</div>
                     <div style={{ flex: 1 }}>

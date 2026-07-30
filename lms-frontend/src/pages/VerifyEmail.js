@@ -51,7 +51,7 @@ function VerifyEmail() {
     return (
       <div style={styles.page}>
         <motion.div
-          style={styles.card}
+          className="liquid-glass-card" style={styles.card}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -71,7 +71,7 @@ function VerifyEmail() {
     <div style={styles.page}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <motion.div
-        style={styles.card}
+        className="liquid-glass-card" style={styles.card}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}

@@ -1,4 +1,6 @@
 # backend/courses/models.py
+import uuid
+
 from django.db import models
 from django.conf import settings
 
@@ -65,6 +67,17 @@ class Enrollment(models.Model):
 
     class Meta:
         unique_together = ('student', 'course')
+
+
+class Certificate(models.Model):
+    """A durable, verifiable certificate issued for one completed enrollment."""
+    enrollment = models.OneToOneField(Enrollment, on_delete=models.CASCADE, related_name='certificate')
+    certificate_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    issued_at = models.DateTimeField(auto_now_add=True)
+    is_revoked = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'Certificate {self.certificate_id} - {self.enrollment.student.username}'
 
 class Review(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')

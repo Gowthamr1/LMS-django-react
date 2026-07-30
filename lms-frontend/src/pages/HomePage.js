@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Compass, LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import ReactBitsParticles from '../components/ReactBitsParticles';
 
 const heroVariants = {
   hidden: { opacity: 0, y: -24 },
@@ -87,6 +88,7 @@ function HomePage() {
 
   return (
     <div style={{ ...styles.container, backgroundColor: theme.isDark ? '#f8fafc' : '#ffffff' }}>
+      <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
 
       {/* Hero */}
       <motion.div
@@ -125,6 +127,7 @@ function HomePage() {
               transition: { duration: 0.2, ease: 'easeOut' },
             }}
             whileTap={{ scale: 0.97 }}
+            className="liquid-glass-card"
             style={{ ...styles.card, border: `1px solid ${color}22` }}
           >
             <Link to={to} style={styles.cardLink}>
@@ -148,6 +151,8 @@ const styles = {
     padding: '3rem 2rem',
     fontFamily: "'Poppins', sans-serif",
     minHeight: '80vh',
+    position: 'relative',
+    isolation: 'isolate',
   },
   hero: {
     textAlign: 'center',

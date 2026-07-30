@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function InstructorEnrollments() {
   const [enrollments, setEnrollments] = useState([]);
@@ -28,7 +29,7 @@ function InstructorEnrollments() {
       </div>
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading enrollments" subtitle="Finding students in your courses" size="lg" />
       ) : enrollments.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>📭</div>
@@ -38,7 +39,7 @@ function InstructorEnrollments() {
       ) : (
         <div style={styles.list}>
           {enrollments.map(e => (
-            <div key={e.id} style={styles.card}>
+            <div key={e.id} className="liquid-glass-card" style={styles.card}>
               {/* Avatar */}
               <div style={styles.avatar}>
                 {(e.student?.[0] || '?').toUpperCase()}

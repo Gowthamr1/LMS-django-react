@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function AdminCourseApproval() {
   const [courses, setCourses] = useState([]);
@@ -35,7 +36,7 @@ function AdminCourseApproval() {
       <h2 style={styles.header}>Course Management</h2>
       
       {loading ? (
-        <div style={styles.loading}>Loading courses...</div>
+        <LmsLoader title="Loading courses" subtitle="Preparing course management" size="lg" />
       ) : error ? (
         <div style={styles.error}>{error}</div>
       ) : courses.length === 0 ? (
@@ -43,7 +44,7 @@ function AdminCourseApproval() {
       ) : (
         <div style={styles.grid}>
           {courses.map(course => (
-            <div key={course.id} style={styles.card}>
+            <div key={course.id} className="liquid-glass-card" style={styles.card}>
               
               {/* Course Image */}
               {course.image_url && (

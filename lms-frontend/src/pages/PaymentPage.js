@@ -85,6 +85,7 @@ export default function PaymentPage() {
           {['credit_card', 'paypal', 'upi'].map((m) => (
             <button
               key={m}
+              className="liquid-glass-card"
               style={{
                 ...styles.methodCard,
                 ...(method === m ? styles.selectedMethod : {})

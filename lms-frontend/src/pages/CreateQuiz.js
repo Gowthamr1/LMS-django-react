@@ -74,7 +74,7 @@ function CreateQuiz() {
 
       <form onSubmit={handleSubmit}>
         {/* Quiz Info */}
-        <div style={styles.card}>
+        <div className="liquid-glass-card" style={styles.card}>
           <h2 style={styles.sectionTitle}>Quiz Details</h2>
           <div style={styles.group}>
             <label style={styles.label}>Select Lesson</label>
@@ -92,7 +92,7 @@ function CreateQuiz() {
 
         {/* Questions */}
         {questions.map((q, idx) => (
-          <div key={idx} style={styles.questionCard}>
+          <div key={idx} className="liquid-glass-card" style={styles.questionCard}>
             <div style={styles.questionHeader}>
               <span style={styles.questionNum}>Question {idx + 1}</span>
               {questions.length > 1 && (

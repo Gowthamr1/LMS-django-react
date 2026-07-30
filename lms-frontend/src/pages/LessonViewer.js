@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import LmsLoader from '../components/LmsLoader';
 
 function getEmbedUrl(videoUrl) {
   if (!videoUrl) return null;
@@ -33,7 +34,6 @@ export default function LessonViewer() {
   const [lesson, setLesson] = useState(null);
   const [quizCount, setQuizCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [marking, setMarking] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,24 +55,8 @@ export default function LessonViewer() {
     loadData();
   }, [id]);
 
-  const handleMarkComplete = async () => {
-    setMarking(true);
-    try {
-      await axiosInstance.post(`/api/courses/lessons/${id}/complete/`);
-      setIsCompleted(true);
-    } catch (err) {
-      console.error('Failed to mark lesson complete:', err);
-    } finally {
-      setMarking(false);
-    }
-  };
-
   if (loading) return (
-    <div style={styles.loadingPage}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={styles.spinner}></div>
-      <p style={styles.loadingText}>Loading lesson...</p>
-    </div>
+    <div style={styles.loadingPage}><LmsLoader title="Loading lesson" subtitle="Preparing your learning material" size="lg" /></div>
   );
 
   if (!lesson) return (
@@ -93,17 +77,7 @@ export default function LessonViewer() {
       <div style={styles.header}>
         <div style={styles.headerTop}>
           <h1 style={styles.lessonTitle}>{lesson.title}</h1>
-          {isCompleted ? (
-            <div style={styles.completedBadge}>✅ Completed</div>
-          ) : (
-            <button
-              onClick={handleMarkComplete}
-              disabled={marking}
-              style={styles.markCompleteBtn}
-            >
-              {marking ? 'Saving...' : '✓ Mark as Complete'}
-            </button>
-          )}
+          {isCompleted && <div style={styles.completedBadge}>✅ Completed</div>}
         </div>
 
         {/* Progress bar */}
@@ -147,7 +121,7 @@ export default function LessonViewer() {
         )}
 
         {/* Text Content */}
-        <div style={styles.contentCard}>
+        <div className="liquid-glass-card" style={styles.contentCard}>
           <h3 style={styles.contentHeading}>📝 Lesson Content</h3>
           <div style={styles.contentBody}>
             {lesson.content.split('\n').map((para, i) => (
@@ -210,11 +184,6 @@ const styles = {
   completedBadge: {
     backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.25rem',
     borderRadius: '20px', fontWeight: '700', fontSize: '0.95rem', flexShrink: 0,
-  },
-  markCompleteBtn: {
-    backgroundColor: 'white', color: '#3b82f6', border: 'none',
-    padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: '700',
-    cursor: 'pointer', fontSize: '0.9rem', flexShrink: 0,
   },
   progressRow: {
     display: 'flex', alignItems: 'center', gap: '1rem',

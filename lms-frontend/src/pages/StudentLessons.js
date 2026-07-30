@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
+import LmsLoader from '../components/LmsLoader';
 
 function StudentLessons() {
   const [lessons, setLessons] = useState([]);
@@ -32,7 +33,7 @@ function StudentLessons() {
       </div>
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading lessons" subtitle="Finding where you left off" size="lg" />
       ) : lessons.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>📭</div>
@@ -46,7 +47,7 @@ function StudentLessons() {
             // lesson.progress is 0 or 100 from LessonSerializer.get_progress
             const done = lesson.progress === 100;
             return (
-              <div key={lesson.id} style={styles.card}>
+              <div key={lesson.id} className="liquid-glass-card" style={styles.card}>
                 <div style={styles.cardTop}>
                   <div style={done ? styles.iconDone : styles.iconPending}>
                     {done ? '✅' : '📖'}

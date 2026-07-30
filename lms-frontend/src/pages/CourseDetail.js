@@ -6,6 +6,7 @@ import {
   BookOpen, Clock, Target, GraduationCap, Lock, Sparkles,
   CheckCircle2, Star, MessageSquareText, Hash,
 } from 'lucide-react';
+import LmsLoader from '../components/LmsLoader';
 
 const heroVariants = {
   hidden: { opacity: 0, y: -24 },
@@ -60,11 +61,7 @@ export default function CourseDetail() {
     : 0;
 
   if (!course) return (
-    <div style={styles.loading}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={styles.spinner}></div>
-      <p style={styles.loadingText}>Loading Course Universe...</p>
-    </div>
+    <div style={styles.loading}><LmsLoader title="Loading course" subtitle="Preparing the course universe for you" size="lg" /></div>
   );
 
   return (
@@ -103,7 +100,7 @@ export default function CourseDetail() {
           <motion.h2 style={styles.sectionTitle} variants={itemVariants}>📚 Course Syllabus</motion.h2>
           <div style={styles.syllabus}>
             {(course.lessons || []).map((lesson, index) => (
-              <motion.div key={lesson.id} style={styles.lessonCard} variants={itemVariants}>
+              <motion.div key={lesson.id} className="liquid-glass-card" style={styles.lessonCard} variants={itemVariants}>
                 <div style={styles.lessonNumber}><Hash size={14} /> Lesson {index + 1}</div>
                 <h3 style={styles.lessonTitle}>{lesson.title}</h3>
               </motion.div>
@@ -118,7 +115,7 @@ export default function CourseDetail() {
 
           {reviewsLoading ? (
             <motion.div style={styles.center} variants={itemVariants}>
-              <div style={styles.spinnerSmall}></div>
+              <LmsLoader title="Loading reviews" subtitle="" size="sm" compact />
             </motion.div>
           ) : reviews.length === 0 ? (
             <motion.p style={styles.noReviews} variants={itemVariants}>
@@ -127,7 +124,7 @@ export default function CourseDetail() {
           ) : (
             <div style={styles.reviewsList}>
               {reviews.map(review => (
-                <motion.div key={review.id} style={styles.reviewCard} variants={itemVariants}>
+                <motion.div key={review.id} className="liquid-glass-card" style={styles.reviewCard} variants={itemVariants}>
                   <div style={styles.reviewTop}>
                     <div style={styles.avatar}>{review.student?.[0]?.toUpperCase() || '?'}</div>
                     <div style={{ flex: 1 }}>
@@ -153,7 +150,7 @@ export default function CourseDetail() {
 
         {/* Sidebar */}
         <div style={styles.sidebar}>
-          <div style={styles.enrollmentCard}>
+          <div className="liquid-glass-card" style={styles.enrollmentCard}>
             {course.is_enrolled ? (
               <div style={styles.enrolledBadge}>
                 🎉 Already Enrolled

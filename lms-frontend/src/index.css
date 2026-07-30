@@ -9,6 +9,24 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background-color: #dceefd;
+  background-image:
+    linear-gradient(135deg, rgba(238, 248, 255, 0.58), rgba(224, 242, 254, 0.42)),
+    url('./assets/liquid-glass-background.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Most LMS screens use an inline full-page pale background. Remove it so the
+   shared backdrop remains visible; only actual content cards get the glass UI. */
+#root [style*="min-height: 100vh"] {
+  background-color: transparent !important;
 }
 
 code {
@@ -16,4 +34,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-

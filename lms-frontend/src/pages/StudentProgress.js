@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import LmsLoader from '../components/LmsLoader';
 
 function StudentProgress() {
   const [enrollments, setEnrollments] = useState([]);
@@ -48,7 +49,7 @@ function StudentProgress() {
       </div>
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading progress" subtitle="Calculating your learning journey" size="lg" />
       ) : enrollments.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>🌱</div>
@@ -68,7 +69,7 @@ function StudentProgress() {
               : (enroll.next_lesson_id || enroll.first_lesson_id);
 
             return (
-              <div key={enroll.id} style={styles.card}>
+              <div key={enroll.id} className="liquid-glass-card" style={styles.card}>
                 {/* Header */}
                 <div style={styles.cardTop}>
                   <div style={styles.courseIcon}>📚</div>

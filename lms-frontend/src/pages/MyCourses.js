@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
+import LmsLoader from '../components/LmsLoader';
 
 function MyCourses() {
   const [enrollments, setEnrollments] = useState([]);
@@ -31,7 +32,7 @@ function MyCourses() {
       </div>
 
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Loading your courses" subtitle="Bringing your learning journey together" size="lg" />
       ) : enrollments.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIcon}>🎓</div>
@@ -51,7 +52,7 @@ function MyCourses() {
               : (enroll.next_lesson_id || enroll.first_lesson_id);
 
             return (
-              <div key={enroll.id} style={styles.card}>
+              <div key={enroll.id} className="liquid-glass-card" style={styles.card}>
                 {/* Top */}
                 <div style={styles.cardTop}>
                   <div style={styles.courseIcon}>📖</div>
@@ -89,6 +90,11 @@ function MyCourses() {
                   <span style={{ ...styles.continueBtn, opacity: 0.5, cursor: 'not-allowed' }}>
                     No lessons yet
                   </span>
+                )}
+                {enroll.completed && (
+                  <Link to="/student/certificates" style={styles.certificateBtn}>
+                    {enroll.certificate_id ? 'Download Certificate' : 'View Certificates'}
+                  </Link>
                 )}
               </div>
             );
@@ -149,6 +155,12 @@ const styles = {
     background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
     color: 'white', borderRadius: '8px', textDecoration: 'none',
     fontWeight: '700', fontSize: '0.9rem',
+  },
+  certificateBtn: {
+    display: 'block', textAlign: 'center', padding: '0.7rem',
+    background: '#fef3c7', color: '#92400e', borderRadius: '8px',
+    textDecoration: 'none', fontWeight: '700', fontSize: '0.9rem',
+    border: '1px solid #fcd34d',
   },
   emptyBox: {
     backgroundColor: 'white', borderRadius: '14px', padding: '4rem 2rem',

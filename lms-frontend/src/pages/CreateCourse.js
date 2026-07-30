@@ -56,7 +56,7 @@ function CreateCourse() {
         <p style={styles.subheading}>Fill in the details below to publish your course</p>
       </div>
 
-      <div style={styles.card}>
+      <div className="liquid-glass-card" style={styles.card}>
         {message && (
           <div style={{ ...styles.alert, ...(message.startsWith('✅') ? styles.alertSuccess : styles.alertError) }}>
             {message}

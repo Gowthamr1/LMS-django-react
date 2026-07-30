@@ -26,7 +26,8 @@ function AdminPermissions() {
     <div style={{ padding: '20px' }}>
       <h2>Permissions Management</h2>
       {message && <p>{message}</p>}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+      <div className="liquid-glass-card" style={{ marginTop: '20px', overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th style={{ border: '1px solid #ccc', padding: '8px' }}>Username</th>
@@ -48,6 +49,7 @@ function AdminPermissions() {
           ))}
         </tbody>
       </table>
+      </div>
 
       <p style={{ marginTop: '20px', color: '#777' }}>
         ⚠️ These actions affect roles immediately. Always verify before promoting or demoting users.

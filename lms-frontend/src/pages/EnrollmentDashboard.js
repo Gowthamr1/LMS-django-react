@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import LmsLoader from '../components/LmsLoader';
 
 function EnrollmentDashboard() {
   const [enrollments, setEnrollments] = useState([]); // default to empty array
@@ -47,7 +48,7 @@ function EnrollmentDashboard() {
     <div style={pageStyle}>
       <div style={titleStyle}>My Enrollments</div>
       {loading ? (
-        <div>Loading...</div>
+        <LmsLoader title="Loading enrollments" subtitle="Preparing your dashboard" size="lg" />
       ) : (
         enrollments.length === 0 ? (
           <div>No enrollments found.</div>

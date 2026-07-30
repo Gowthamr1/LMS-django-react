@@ -50,7 +50,7 @@ function ServerWakeup() {
                     transition={{ duration: 0.3 }}
                 >
                     <motion.div
-                        style={styles.card}
+                        className="liquid-glass-card" style={styles.card}
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}

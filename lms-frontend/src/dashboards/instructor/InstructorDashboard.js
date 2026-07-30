@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ReactBitsParticles from '../../components/ReactBitsParticles';
+
 
 const features = [
   { title: 'Create Course', icon: '📘', path: '/instructor/create-course', description: 'Develop new courses and structure your curriculum' },
@@ -13,6 +15,7 @@ const features = [
 function InstructorDashboard() {
   return (
     <div style={styles.page}>
+      <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.heading}>Welcome Back, Instructor! 👋</h1>
@@ -23,7 +26,7 @@ function InstructorDashboard() {
       <div style={styles.grid}>
         {features.map((feature, index) => (
           <Link key={index} to={feature.path} style={styles.cardLink}>
-            <div style={styles.card}>
+            <div className="liquid-glass-card" style={styles.card}>
               <div style={styles.iconWrap}>{feature.icon}</div>
               <h3 style={styles.cardTitle}>{feature.title}</h3>
               <p style={styles.cardDesc}>{feature.description}</p>
@@ -44,6 +47,9 @@ const styles = {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     backgroundColor: '#f8fafc',
     minHeight: '100vh',
+    position: 'relative',
+    isolation: 'isolate',
+    overflow: 'hidden',
   },
   header: {
     background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',

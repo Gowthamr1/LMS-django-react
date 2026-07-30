@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CourseViewSet, LessonViewSet, EnrollmentViewSet, ReviewViewSet,
     QuizViewSet, QuizAttemptViewSet, QuestionViewSet, PaymentViewSet,
-    check_enrollment, user_profile, mark_lesson_complete
+    check_enrollment, user_profile, my_certificates, download_certificate,
+    verify_certificate,
 )
 
 router = DefaultRouter()
@@ -19,7 +20,9 @@ router.register('payments', PaymentViewSet, basename='payment')
 urlpatterns = [
     path('', include(router.urls)),
     path('check-enrollment/<int:course_id>/', check_enrollment, name='check-enrollment'),
+    path('certificates/', my_certificates, name='my-certificates'),
+    path('certificates/<uuid:certificate_id>/download/', download_certificate, name='download-certificate'),
+    path('certificates/verify/<uuid:certificate_id>/', verify_certificate, name='verify-certificate'),
     path('auth/profile/', user_profile),
     # ✅ NEW: manually mark a lesson as complete (for lessons without quizzes)
-    path('lessons/<int:lesson_id>/complete/', mark_lesson_complete, name='mark-lesson-complete'),
 ]

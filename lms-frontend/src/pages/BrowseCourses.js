@@ -3,6 +3,7 @@ import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, BookOpen, GraduationCap, TrendingUp, Gift,  Inbox, SearchX } from 'lucide-react';
+import LmsLoader from '../components/LmsLoader';
 
 // ── Animation variants (matches StudentDashboard / Reviews) ────────
 const headerVariants = {
@@ -84,7 +85,7 @@ function BrowseCourses() {
 
       {/* Loading */}
       {loading ? (
-        <div style={styles.center}><div style={styles.spinner}></div></div>
+        <LmsLoader title="Finding courses" subtitle="Loading the latest learning opportunities" size="lg" />
       ) : filtered.length === 0 ? (
         <div style={styles.emptyBox}>
           <div style={styles.emptyIconWrap}>
@@ -114,7 +115,8 @@ function BrowseCourses() {
                   boxShadow: `0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.06), 0 20px 36px ${accent.color}33`,
                   transition: { duration: 0.25, ease: 'easeOut' },
                 }}
-                style={{ ...styles.card, border: `1px solid ${accent.color}22` }}
+                className="liquid-glass-card"
+            style={{ ...styles.card, border: `1px solid ${accent.color}22` }}
               >
                 {/* Image */}
                 <div style={styles.imageWrap}>

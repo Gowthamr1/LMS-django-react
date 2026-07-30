@@ -71,7 +71,7 @@ function ChangePassword() {
   };
 
   return (
-    <section style={styles.card}>
+    <section className="liquid-glass-card" style={styles.card}>
       <h2 style={styles.title}>Change Password</h2>
       <p style={styles.description}>Confirm your current password, then use the six-digit code sent to your email.</p>
 

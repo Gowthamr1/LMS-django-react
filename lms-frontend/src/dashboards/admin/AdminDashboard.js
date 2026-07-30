@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ReactBitsParticles from '../../components/ReactBitsParticles';
 
 function AdminDashboard() {
   return (
     <div style={styles.container}>
+      <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
       <header style={styles.header}>
         <h1 style={styles.title}>Admin Dashboard</h1>
         <p style={styles.subtitle}>Administrative Control Panel</p>
@@ -61,7 +63,7 @@ function AdminDashboard() {
 
 const DashboardCard = ({ to, icon, title, description }) => (
   <Link to={to} style={styles.cardLink}>
-    <div style={styles.card}>
+    <div className="liquid-glass-card" style={styles.card}>
       <div style={styles.cardIcon}>{icon}</div>
       <h3 style={styles.cardTitle}>{title}</h3>
       <p style={styles.cardDescription}>{description}</p>
@@ -74,6 +76,10 @@ const styles = {
     padding: '2rem',
     maxWidth: '1200px',
     margin: '0 auto',
+    minHeight: '100vh',
+    position: 'relative',
+    isolation: 'isolate',
+    overflow: 'hidden',
   },
   header: {
     textAlign: 'center',
