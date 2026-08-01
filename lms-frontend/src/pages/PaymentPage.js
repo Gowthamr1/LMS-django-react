@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import { CreditCard, ShieldCheck, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Lock, Sparkles, GraduationCap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function PaymentPage() {
   const { courseId } = useParams();
@@ -12,13 +14,12 @@ export default function PaymentPage() {
   const [method, setMethod] = useState('credit_card');
 
   useEffect(() => {
-    // axiosInstance now automatically attaches the token via interceptor
     const fetchCourse = async () => {
       try {
         const res = await axiosInstance.get(`/api/courses/courses/${courseId}/`);
         setCourse(res.data);
       } catch (err) {
-        setMessage('❌ Failed to load course info.');
+        setMessage('Failed to load course info.');
         console.error(err);
       }
     };
@@ -30,27 +31,23 @@ export default function PaymentPage() {
     setMessage('');
     setLoading(true);
 
-    // Short mock delay (1.5s) so it feels like processing without freezing the UI
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
       await axiosInstance.post(
         '/api/courses/payments/',
         { course: courseId },
-        // The backend also sends transactional emails for a new enrollment.
-        // Allow enough time for a Render cold start and those safe sends.
         { timeout: 60000 },
       );
-      setMessage('🎉 Payment successful! Redirecting...');
+      setMessage('Payment successful! Enrolling in course...');
       setTimeout(() => navigate('/student/my-courses'), 2000);
     } catch (err) {
-      // DRF validation errors can come back as arrays or under non_field_errors
       const data = err.response?.data;
       const msg =
         data?.detail ||
         (Array.isArray(data) ? data[0] : null) ||
         data?.non_field_errors?.[0] ||
-        '❌ Payment failed. Please try again.';
+        'Payment failed. Please try again.';
       setMessage(msg);
     } finally {
       setLoading(false);
@@ -58,251 +55,161 @@ export default function PaymentPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <style>
-        {`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}
-      </style>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      <Link
+        to={`/courses/${courseId}`}
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Course Overview
+      </Link>
 
-      <div style={styles.header}>
-        <h1 style={styles.title}>{course?.title || 'Course Enrollment'}</h1>
-        {course && (
-          <div style={styles.priceTag}>
-            <span style={styles.price}>${course.price}</span>
-            <span style={styles.priceLabel}>one-time payment</span>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        {/* Order Summary Column */}
+        <div className="md:col-span-5 space-y-6">
+          <div className="glass-card p-6 border border-indigo-500/30 rounded-2xl relative overflow-hidden">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[11px] font-bold uppercase tracking-wider mb-4">
+              <Sparkles className="w-3.5 h-3.5" /> Order Summary
+            </div>
+
+            {course ? (
+              <div>
+                <div className="w-full h-36 rounded-xl bg-slate-900 overflow-hidden mb-4 border border-slate-800">
+                  {course.external_image_url || course.image ? (
+                    <img src={course.external_image_url || course.image} alt={course.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-indigo-950/40">
+                      <GraduationCap className="w-10 h-10 text-indigo-400" />
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="text-lg font-bold text-white mb-1">{course.title}</h3>
+                <p className="text-xs text-slate-400 mb-4 line-clamp-2">{course.description}</p>
+
+                <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-300">Total Price:</span>
+                  <span className="text-2xl font-extrabold text-white">${parseFloat(course.price || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-xs">Loading item...</div>
+            )}
           </div>
-        )}
-      </div>
 
-      <div style={styles.content}>
-        <h2 style={styles.sectionTitle}>💸 Choose Payment Method</h2>
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 flex items-center gap-3">
+            <ShieldCheck className="w-6 h-6 text-emerald-400 flex-shrink-0" />
+            <span>Instant Access. 256-bit encrypted checkout simulator.</span>
+          </div>
+        </div>
 
-        <div style={styles.methodGrid}>
-          {['credit_card', 'paypal', 'upi'].map((m) => (
+        {/* Payment Form Column */}
+        <div className="md:col-span-7">
+          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl">
+            
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Payment Method</h2>
+                  <p className="text-xs text-slate-400">Complete mock transaction to unlock course</p>
+                </div>
+              </div>
+            </div>
+
+            {message && (
+              <div className={`p-4 rounded-xl text-xs mb-6 flex items-center gap-2 border ${
+                message.includes('successful') 
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+                  : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+              }`}>
+                {message.includes('successful') ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+                <span>{message}</span>
+              </div>
+            )}
+
+            {/* Method Select */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                type="button"
+                onClick={() => setMethod('credit_card')}
+                className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                  method === 'credit_card'
+                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <CreditCard className="w-4 h-4" /> Credit Card
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMethod('paypal')}
+                className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                  method === 'paypal'
+                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <Lock className="w-4 h-4" /> Instant Checkout
+              </button>
+            </div>
+
+            {/* Mock Inputs */}
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cardholder Name</label>
+                <input
+                  type="text"
+                  defaultValue="John Student"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Card Number</label>
+                <input
+                  type="text"
+                  defaultValue="•••• •••• •••• 4242"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Expiry Date</label>
+                  <input type="text" defaultValue="12/28" className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white text-center" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">CVC</label>
+                  <input type="text" defaultValue="888" className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white text-center" />
+                </div>
+              </div>
+            </div>
+
             <button
-              key={m}
-              className="liquid-glass-card"
-              style={{
-                ...styles.methodCard,
-                ...(method === m ? styles.selectedMethod : {})
-              }}
-              onClick={() => setMethod(m)}
+              type="button"
+              onClick={handleMockPayment}
+              disabled={loading || !course}
+              className="w-full py-4 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2"
             >
-              <span style={styles.methodEmoji}>
-                {m === 'credit_card' ? '💳' : m === 'paypal' ? '🅿️' : '📱'}
-              </span>
-              <span style={styles.methodName}>
-                {m === 'credit_card' ? 'Credit Card' : m === 'paypal' ? 'PayPal' : 'UPI'}
-              </span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Lock className="w-4 h-4" /> Complete Payment (${course ? parseFloat(course.price || 0).toFixed(2) : '0.00'})
+                </>
+              )}
             </button>
-          ))}
-        </div>
 
-        <div style={styles.paymentDetails}>
-          <div style={styles.detailItem}>
-            <span>Course Access:</span>
-            <span style={styles.detailValue}>Lifetime 🔒</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Support:</span>
-            <span style={styles.detailValue}>24/7 🕒</span>
           </div>
         </div>
 
-        <button
-          onClick={handleMockPayment}
-          disabled={loading}
-          style={styles.payButton}
-        >
-          {loading ? (
-            <>
-              <div style={styles.spinner}></div>
-              Processing...
-            </>
-          ) : (
-            `Pay with ${method.replace('_', ' ')} →`
-          )}
-        </button>
-
-        {message && (
-          <div style={{
-            ...styles.message,
-            ...(message.startsWith('🎉') ? styles.successMessage : styles.errorMessage)
-          }}>
-            {message}
-          </div>
-        )}
-
-        <div style={styles.securityNote}>
-          🔒 Secure payment processing
-          <div style={styles.securityBadges}>
-            <span style={styles.badge}>PCI DSS</span>
-            <span style={styles.badge}>SSL</span>
-            <span style={styles.badge}>3D Secure</span>
-          </div>
-        </div>
       </div>
+
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: '600px',
-    margin: '2rem auto',
-    borderRadius: '20px',
-    overflow: 'hidden',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-    backgroundColor: 'white',
-    fontFamily: "'Inter', sans-serif"
-  },
-  header: {
-    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-    color: 'white',
-    padding: '2rem',
-    textAlign: 'center'
-  },
-  thumbnail: {
-    width: '100px',
-    height: '100px',
-    borderRadius: '15px',
-    marginBottom: '1rem',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-  },
-  title: {
-    fontSize: '1.8rem',
-    margin: '0.5rem 0',
-    fontWeight: '600'
-  },
-  priceTag: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: '0.8rem 1.5rem',
-    borderRadius: '30px',
-    display: 'inline-block',
-    marginTop: '1rem'
-  },
-  price: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    display: 'block'
-  },
-  priceLabel: {
-    fontSize: '0.9rem',
-    opacity: 0.9
-  },
-  content: {
-    padding: '2rem'
-  },
-  sectionTitle: {
-    fontSize: '1.5rem',
-    color: '#1f2937',
-    marginBottom: '1.5rem'
-  },
-  methodGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '1rem',
-    marginBottom: '2rem'
-  },
-  methodCard: {
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '1rem',
-    background: 'white',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-  selectedMethod: {
-    borderColor: '#4f46e5',
-    backgroundColor: '#eef2ff',
-    transform: 'translateY(-3px)',
-    boxShadow: '0 4px 10px rgba(79,70,229,0.15)'
-  },
-  methodEmoji: {
-    fontSize: '2rem',
-    display: 'block',
-    marginBottom: '0.5rem'
-  },
-  methodName: {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#1f2937'
-  },
-  paymentDetails: {
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    marginBottom: '2rem'
-  },
-  detailItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '0.8rem',
-    color: '#4b5563'
-  },
-  detailValue: {
-    fontWeight: '600',
-    color: '#1f2937'
-  },
-  payButton: {
-    width: '100%',
-    padding: '1.2rem',
-    background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.8rem'
-  },
-  spinner: {
-    width: '24px',
-    height: '24px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTopColor: 'white',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
-  },
-  message: {
-    padding: '1rem',
-    borderRadius: '8px',
-    marginTop: '1.5rem',
-    textAlign: 'center',
-    fontWeight: '500'
-  },
-  successMessage: {
-    backgroundColor: '#dcfce7',
-    color: '#166534'
-  },
-  errorMessage: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b'
-  },
-  securityNote: {
-    textAlign: 'center',
-    color: '#6b7280',
-    fontSize: '0.9rem',
-    marginTop: '2rem'
-  },
-  securityBadges: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    marginTop: '0.5rem'
-  },
-  badge: {
-    backgroundColor: '#e5e7eb',
-    color: '#4b5563',
-    padding: '0.3rem 0.8rem',
-    borderRadius: '20px',
-    fontSize: '0.8rem'
-  }
-};

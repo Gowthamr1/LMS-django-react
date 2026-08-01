@@ -1,27 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Clock, Target, GraduationCap, Lock, Sparkles,
-  CheckCircle2, Star, MessageSquareText, Hash,
+  CheckCircle2, Star, MessageSquareText, Hash, ArrowLeft, PlayCircle, ShieldCheck
 } from 'lucide-react';
 import LmsLoader from '../components/LmsLoader';
-
-const heroVariants = {
-  hidden: { opacity: 0, y: -24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
-};
-
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
-};
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -38,7 +23,7 @@ export default function CourseDetail() {
         setCourse(response.data);
       } catch (err) {
         console.error('Error loading course:', err);
-        setMessage('🚨 Failed to load course details');
+        setMessage('Failed to load course details');
       }
     };
     loadCourse();
@@ -60,362 +45,172 @@ export default function CourseDetail() {
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
 
-  if (!course) return (
-    <div style={styles.loading}><LmsLoader title="Loading course" subtitle="Preparing the course universe for you" size="lg" /></div>
-  );
+  if (!course) {
+    return <LmsLoader title="Loading course" subtitle="Preparing course details..." size="lg" />;
+  }
 
   return (
-    <div style={styles.container}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      <Link
+        to="/student/browse"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Browse Courses
+      </Link>
 
-      {/* Course Hero Section */}
-      <motion.div style={styles.hero} variants={heroVariants} initial="hidden" animate="visible">
-        <div style={styles.heroContent}>
-          <div style={styles.categoryBadge}>
-            <BookOpen size={14} /> {course.category || 'General Education'}
+      {/* Hero Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/95 via-indigo-950/40 to-slate-900/95"
+      >
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
+            <BookOpen className="w-3.5 h-3.5" /> {course.category || 'General Education'}
           </div>
-          <h1 style={styles.title}>{course.title}</h1>
-          <p style={styles.excerpt}>{course.short_description}</p>
+
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4 leading-tight">
+            {course.title}
+          </h1>
+
           {reviews.length > 0 && (
-            <div style={styles.heroRating}>
-              <Star size={18} color="#fbbf24" fill="#fbbf24" />
-              <span style={styles.heroRatingValue}>{avgRating.toFixed(1)}</span>
-              <span style={styles.heroRatingCount}>({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+            <div className="flex items-center gap-2 mb-6">
+              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+              <span className="text-lg font-extrabold text-white">{avgRating.toFixed(1)}</span>
+              <span className="text-xs text-slate-400">({reviews.length} student review{reviews.length !== 1 ? 's' : ''})</span>
             </div>
           )}
-          <div style={styles.metaContainer}>
-            <div style={styles.metaItem}><Clock size={18} /> {course.duration || '6 Weeks'}</div>
-            <div style={styles.metaItem}><Target size={18} /> {course.difficulty || 'Beginner'}</div>
-            <div style={styles.metaItem}><GraduationCap size={18} /> {course.instructor_name || 'Expert Instructor'}</div>
+
+          <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-300">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <Clock className="w-4 h-4 text-cyan-400" /> {course.duration || '6 Weeks'}
+            </span>
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <Target className="w-4 h-4 text-indigo-400" /> {course.difficulty || 'Beginner'}
+            </span>
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <GraduationCap className="w-4 h-4 text-violet-400" /> Instructor: {course.instructor_name || 'Expert Instructor'}
+            </span>
           </div>
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div style={styles.contentGrid}>
-        <motion.div style={styles.mainContent} variants={containerVariants} initial="hidden" animate="visible">
-          <motion.h2 style={styles.sectionTitle} variants={itemVariants}>📖 Course Description</motion.h2>
-          <motion.p style={styles.description} variants={itemVariants}>{course.description}</motion.p>
+      {/* Grid Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Main Info */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          <div className="glass-card p-6 sm:p-8 border border-slate-800 space-y-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-indigo-400" /> Course Description
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              {course.description || 'No detailed description available.'}
+            </p>
+          </div>
 
-          <motion.h2 style={styles.sectionTitle} variants={itemVariants}>📚 Course Syllabus</motion.h2>
-          <div style={styles.syllabus}>
-            {(course.lessons || []).map((lesson, index) => (
-              <motion.div key={lesson.id} className="liquid-glass-card" style={styles.lessonCard} variants={itemVariants}>
-                <div style={styles.lessonNumber}><Hash size={14} /> Lesson {index + 1}</div>
-                <h3 style={styles.lessonTitle}>{lesson.title}</h3>
-              </motion.div>
-            ))}
+          {/* Syllabus */}
+          <div className="glass-card p-6 sm:p-8 border border-slate-800 space-y-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-violet-400" /> Curriculum & Syllabus
+            </h2>
+
+            <div className="space-y-3">
+              {(course.lessons || []).length === 0 ? (
+                <p className="text-xs text-slate-400">No lessons uploaded yet for this course.</p>
+              ) : (
+                (course.lessons || []).map((lesson, idx) => (
+                  <div key={lesson.id} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-mono text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <h4 className="text-sm font-bold text-white">{lesson.title}</h4>
+                    </div>
+                    <PlayCircle className="w-4 h-4 text-slate-500" />
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Reviews */}
-          <motion.h2 style={styles.sectionTitle} variants={itemVariants}>
-            <MessageSquareText size={22} style={{ verticalAlign: '-4px', marginRight: '0.4rem' }} />
-            Student Reviews
-          </motion.h2>
+          <div className="glass-card p-6 sm:p-8 border border-slate-800 space-y-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <MessageSquareText className="w-5 h-5 text-amber-400" /> Student Reviews
+            </h2>
 
-          {reviewsLoading ? (
-            <motion.div style={styles.center} variants={itemVariants}>
-              <LmsLoader title="Loading reviews" subtitle="" size="sm" compact />
-            </motion.div>
-          ) : reviews.length === 0 ? (
-            <motion.p style={styles.noReviews} variants={itemVariants}>
-              No reviews yet — be the first to take this course and share your thoughts!
-            </motion.p>
-          ) : (
-            <div style={styles.reviewsList}>
-              {reviews.map(review => (
-                <motion.div key={review.id} className="liquid-glass-card" style={styles.reviewCard} variants={itemVariants}>
-                  <div style={styles.reviewTop}>
-                    <div style={styles.avatar}>{review.student?.[0]?.toUpperCase() || '?'}</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={styles.reviewerName}>{review.student}</p>
-                      <div style={styles.reviewStars}>
-                        {[1,2,3,4,5].map(i => (
-                          <Star key={i} size={14}
-                            color={i <= review.rating ? '#f59e0b' : '#cbd5e1'}
-                            fill={i <= review.rating ? '#fbbf24' : 'none'} />
+            {reviewsLoading ? (
+              <p className="text-xs text-slate-400">Loading reviews...</p>
+            ) : reviews.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4">No reviews yet — be the first to enroll and share your feedback!</p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map(rev => (
+                  <div key={rev.id} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{rev.student_name || 'Enrolled Student'}</span>
+                      <div className="flex gap-1 text-amber-400">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Star key={star} className={`w-3.5 h-3.5 ${star <= rev.rating ? 'fill-amber-400' : 'text-slate-700'}`} />
                         ))}
                       </div>
                     </div>
-                    {review.created_at && (
-                      <span style={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString()}</span>
-                    )}
+                    <p className="text-xs text-slate-300 leading-relaxed">"{rev.comment}"</p>
                   </div>
-                  {review.comment && <p style={styles.reviewComment}>{review.comment}</p>}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Sidebar */}
-        <div style={styles.sidebar}>
-          <div className="liquid-glass-card" style={styles.enrollmentCard}>
+        </div>
+
+        {/* Sidebar Sticky Card */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-indigo-500/30 shadow-2xl sticky top-24">
+            
             {course.is_enrolled ? (
-              <div style={styles.enrolledBadge}>
-                🎉 Already Enrolled
+              <div className="space-y-4 text-center">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                  🎉 You are enrolled in this course
+                </div>
+
                 <button
-                  style={styles.startLearningButton}
-                  onClick={() => navigate(`/lesson/${course.lessons[0]?.id}`)}
+                  onClick={() => navigate(`/lesson/${course.lessons?.[0]?.id}`)}
+                  className="w-full py-3.5 px-4 rounded-xl glass-button-primary text-xs font-bold flex items-center justify-center gap-2"
                 >
-                  <Sparkles size={16} /> Start Learning Now
+                  <Sparkles className="w-4 h-4" /> Start Learning Now
                 </button>
               </div>
             ) : (
-              <>
-                <div style={styles.priceContainer}>
-                  <span style={styles.price}>${course.price || '0.00'}</span>
-                  <span style={styles.priceNote}>one-time payment</span>
+              <div className="space-y-6">
+                <div>
+                  <span className="text-3xl font-extrabold text-white">${parseFloat(course.price || 0).toFixed(2)}</span>
+                  <span className="text-xs text-slate-400 block mt-1">One-time payment • Full access</span>
                 </div>
-                <button style={styles.enrollButton} onClick={handleEnroll}>
-                  <Lock size={16} /> Enroll Now
+
+                <button
+                  onClick={handleEnroll}
+                  className="w-full py-4 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-4 h-4" /> Enroll In Course
                 </button>
-                <div style={styles.includesList}>
-                  <div style={styles.includesItem}><CheckCircle2 size={16} color="#22c55e" /> Lifetime Access</div>
-                  <div style={styles.includesItem}><CheckCircle2 size={16} color="#22c55e" /> Certificate of Completion</div>
-                  <div style={styles.includesItem}><CheckCircle2 size={16} color="#22c55e" /> 24/7 Support</div>
+
+                <div className="space-y-2 pt-4 border-t border-slate-800 text-xs text-slate-300">
+                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Full lifetime access</p>
+                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Interactive quizzes & scores</p>
+                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Verified QR PDF Certificate</p>
                 </div>
-              </>
+              </div>
             )}
+
           </div>
         </div>
+
       </div>
 
-      {message && (
-        <div style={styles.message}>{message}</div>
-      )}
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    fontFamily: "'Poppins', sans-serif",
-    backgroundColor: '#f8fafc'
-  },
-  hero: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white',
-    padding: '4rem 2rem',
-    borderBottomLeftRadius: '30px',
-    borderBottomRightRadius: '30px',
-    boxShadow: '0 12px 30px rgba(59,130,246,0.3)'
-  },
-  heroContent: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    textAlign: 'center'
-  },
-  categoryBadge: {
-    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    padding: '0.5rem 1.5rem',
-    borderRadius: '20px',
-    marginBottom: '1rem',
-    fontSize: '0.9rem'
-  },
-  title: {
-    fontSize: '2.5rem',
-    margin: '1rem 0',
-    lineHeight: 1.2,
-    fontWeight: '700',
-    textShadow: '2px 2px 4px rgba(0,0,0,0.15)',
-  },
-  excerpt: {
-    fontSize: '1.2rem',
-    opacity: 0.9,
-    marginBottom: '1rem'
-  },
-  heroRating: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-    marginBottom: '1.5rem',
-  },
-  heroRatingValue: { fontSize: '1.1rem', fontWeight: '700' },
-  heroRatingCount: { opacity: 0.85, fontSize: '0.9rem' },
-  metaContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '2rem',
-    flexWrap: 'wrap'
-  },
-  metaItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: '1.05rem'
-  },
-  contentGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 350px',
-    gap: '2rem',
-    padding: '2rem',
-    maxWidth: '1400px',
-    margin: '0 auto'
-  },
-  mainContent: {
-    backgroundColor: 'white',
-    borderRadius: '18px',
-    padding: '2rem',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
-  },
-  sectionTitle: {
-    fontSize: '1.6rem',
-    fontWeight: '600',
-    color: '#1f2937',
-    margin: '2rem 0 1.5rem',
-    paddingBottom: '0.5rem',
-    borderBottom: '2px solid #e5e7eb'
-  },
-  description: {
-    color: '#4b5563',
-    lineHeight: 1.7,
-    fontSize: '1.05rem'
-  },
-  syllabus: {
-    display: 'grid',
-    gap: '1.25rem'
-  },
-  lessonCard: {
-    backgroundColor: '#f8fafc',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    borderLeft: '4px solid #3b82f6'
-  },
-  lessonNumber: {
-    display: 'flex', alignItems: 'center', gap: '0.3rem',
-    color: '#3b82f6',
-    fontWeight: '600',
-    marginBottom: '0.5rem',
-    fontSize: '0.85rem',
-  },
-  lessonTitle: {
-    fontSize: '1.15rem',
-    margin: 0,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  reviewsList: { display: 'grid', gap: '1.25rem' },
-  reviewCard: {
-    backgroundColor: '#f8fafc', borderRadius: '12px', padding: '1.25rem',
-    border: '1px solid #f1f5f9',
-  },
-  reviewTop: { display: 'flex', alignItems: 'flex-start', gap: '0.85rem' },
-  avatar: {
-    width: '38px', height: '38px', borderRadius: '50%',
-    backgroundColor: '#3b82f6', color: 'white',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: '700', fontSize: '1rem', flexShrink: 0,
-  },
-  reviewerName: { fontWeight: '600', color: '#1e293b', margin: '0 0 0.25rem', fontSize: '0.95rem' },
-  reviewStars: { display: 'flex', gap: '0.1rem' },
-  reviewDate: { fontSize: '0.78rem', color: '#94a3b8', flexShrink: 0, whiteSpace: 'nowrap' },
-  reviewComment: { color: '#475569', fontSize: '0.92rem', lineHeight: 1.6, margin: '0.85rem 0 0' },
-  noReviews: { color: '#6b7280', fontSize: '0.95rem', fontStyle: 'italic' },
-  center: { display: 'flex', justifyContent: 'center', padding: '2rem' },
-  spinnerSmall: {
-    width: '28px', height: '28px', border: '4px solid #e5e7eb',
-    borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite',
-  },
-  sidebar: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2rem'
-  },
-  enrollmentCard: {
-    backgroundColor: 'white',
-    borderRadius: '18px',
-    padding: '2rem',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-    position: 'sticky',
-    top: '2rem'
-  },
-  priceContainer: {
-    textAlign: 'center',
-    marginBottom: '1.5rem'
-  },
-  price: {
-    fontSize: '2.5rem',
-    fontWeight: '700',
-    color: '#1f2937'
-  },
-  priceNote: {
-    display: 'block',
-    color: '#6b7280',
-    fontSize: '0.9rem'
-  },
-  enrollButton: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-    width: '100%',
-    padding: '1.1rem',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '1.05rem',
-    fontWeight: '600',
-    cursor: 'pointer'
-  },
-  enrolledBadge: {
-    textAlign: 'center',
-    color: '#166534',
-    backgroundColor: '#dcfce7',
-    padding: '1.5rem',
-    borderRadius: '12px'
-  },
-  startLearningButton: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-    width: '100%',
-    marginTop: '1rem',
-    padding: '1rem',
-    backgroundColor: '#10b981',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    fontWeight: '600'
-  },
-  includesList: {
-    marginTop: '1.5rem',
-    paddingTop: '1.5rem',
-    borderTop: '2px solid #e5e7eb'
-  },
-  includesItem: {
-    display: 'flex', alignItems: 'center', gap: '0.5rem',
-    padding: '0.5rem 0',
-    color: '#374151'
-  },
-  message: {
-    position: 'fixed',
-    bottom: '2rem',
-    right: '2rem',
-    backgroundColor: '#fffbeb',
-    color: '#92400e',
-    padding: '1rem 2rem',
-    borderRadius: '10px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc'
-  },
-  spinner: {
-    width: '50px',
-    height: '50px',
-    border: '5px solid #e5e7eb',
-    borderTopColor: '#3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '1rem'
-  },
-  loadingText: {
-    fontSize: '1.2rem',
-    color: '#4b5563',
-    fontStyle: 'italic'
-  }
-};

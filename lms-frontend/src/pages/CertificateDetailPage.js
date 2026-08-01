@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import { Award, ArrowLeft, Download, ExternalLink, CheckCircle2, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function CertificateDetailPage() {
   const { certificateId } = useParams();
@@ -23,9 +25,6 @@ function CertificateDetailPage() {
     setDownloadError('');
     setDownloading(true);
     try {
-      // Fetches the real reportlab-generated PDF from the backend and
-      // triggers an actual file save — this is the file that should be
-      // shared/printed/kept, not the on-screen preview below.
       const response = await axiosInstance.get(
         `/api/courses/certificates/${certificateId}/download/`,
         { responseType: 'blob' },
@@ -46,277 +45,138 @@ function CertificateDetailPage() {
     }
   };
 
-  if (error) return <main style={styles.page}><p style={styles.error}>{error}</p></main>;
-  if (!certificate) return <main style={styles.page}><p style={styles.loading}>Loading certificate...</p></main>;
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <div className="glass-card p-8 border border-rose-500/20 max-w-md mx-auto">
+          <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Certificate Unavailable</h2>
+          <p className="text-slate-400 text-xs mb-6">{error}</p>
+          <Link to="/student/certificates" className="px-5 py-2.5 rounded-xl glass-button-primary text-xs font-bold">
+            Back to Certificates
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-  // Same verification URL the backend's QR code encodes
-  // (settings.FRONTEND_URL + /verify-certificate/<id>).
+  if (!certificate) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
+        <p className="text-slate-400 text-sm">Loading certificate details...</p>
+      </div>
+    );
+  }
+
   const verifyUrl = `${window.location.origin}/verify-certificate/${certificateId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${encodeURIComponent(verifyUrl)}`;
 
   return (
-    <main style={styles.page}>
-      <div style={styles.actions}>
-        <Link to="/student/certificates" style={styles.back}>
-          &larr; Back to certificates
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Top Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <Link
+          to="/student/certificates"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to My Certificates
         </Link>
-        <button type="button" onClick={handleDownload} disabled={downloading} style={styles.downloadBtn}>
-          {downloading ? 'Preparing PDF...' : 'Download PDF Certificate'}
-        </button>
+
+        <div className="flex items-center gap-3">
+          <Link
+            to={`/verify-certificate/${certificateId}`}
+            className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5"
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-400" /> Public Verification
+          </Link>
+
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="px-5 py-2.5 rounded-xl glass-button-primary text-xs font-bold flex items-center gap-2"
+          >
+            {downloading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Download className="w-4 h-4" /> Download Official PDF
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {downloadError && <p style={styles.downloadErrorText}>{downloadError}</p>}
+      {downloadError && (
+        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+          {downloadError}
+        </div>
+      )}
 
-      {/* Preview only — mirrors certificate_pdf.py's layout so what the
-          student sees on screen matches the downloaded PDF. The real file
-          is generated server-side by reportlab, fetched above. */}
-      <article style={styles.outerBorder}>
-        <div style={styles.innerBorder}>
+      {/* Certificate Frame Preview */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="rounded-3xl p-8 sm:p-12 glass-panel border border-amber-500/30 shadow-2xl relative overflow-hidden bg-slate-950 text-center"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <p style={styles.brand}>LMS LEARNING ACHIEVEMENT</p>
-          <h1 style={styles.heading}>Certificate of Completion</h1>
+        <div className="relative z-10 max-w-3xl mx-auto border-4 border-amber-500/20 rounded-2xl p-6 sm:p-10 bg-slate-900/60 backdrop-blur-xl">
+          
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/10">
+            <Award className="w-8 h-8" />
+          </div>
 
-          <p style={styles.bodyText}>This certifies that</p>
-          <h2 style={styles.studentName}>{certificate.student_name}</h2>
-          <div style={styles.underline} />
+          <p className="text-xs font-bold text-amber-400 tracking-widest uppercase mb-2">
+            Certificate of Accomplishment
+          </p>
 
-          <p style={styles.bodyText}>has successfully completed all course requirements for</p>
-          <h3 style={styles.courseTitle}>{certificate.course_title}</h3>
-          <p style={styles.requirements}>All lessons completed and required quizzes passed with 100% course progress.</p>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-6">
+            Online LMS Learning Achievement
+          </h1>
 
-          <div style={styles.footerRow}>
-            <div style={styles.signatureBlock}>
-              <div style={styles.signatureLine} />
-              <strong style={styles.instructorName}>{certificate.instructor_name}</strong>
-              <span style={styles.caption}>Instructor - Digitally Signed</span>
+          <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">This is to certify that</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-indigo-300 mb-6">
+            {certificate.student_name}
+          </h2>
+
+          <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">has successfully completed the course</p>
+          <h3 className="text-lg sm:text-xl font-extrabold text-white mb-8 max-w-xl mx-auto leading-snug">
+            "{certificate.course_title}"
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-800 text-left text-xs mb-8">
+            <div>
+              <p className="text-slate-400">Instructor: <strong className="text-white">{certificate.instructor_name}</strong></p>
+              <p className="text-slate-400">Issued On: <strong className="text-white">{new Date(certificate.issued_at).toLocaleDateString()}</strong></p>
             </div>
-
-            <div style={styles.detailsBlock}>
-              <div>
-                <span style={styles.detailLabel}>Issued</span>
-                <p style={styles.detailValue}>
-                  {new Date(certificate.issued_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-              <div>
-                <span style={styles.detailLabel}>Certificate ID</span>
-                <p style={styles.detailValueSmall}>{certificate.certificate_id}</p>
-              </div>
-            </div>
-
-            <div style={styles.qrBlock}>
-              <img src={qrImageUrl} alt="Scan to verify this certificate" style={styles.qrImage} />
-              <span style={styles.caption}>Scan to verify</span>
+            <div>
+              <p className="text-slate-400">Status: <span className="text-emerald-400 font-bold">VERIFIED</span></p>
+              <p className="text-slate-400 font-mono text-[11px] truncate">ID: {certificate.certificate_id}</p>
             </div>
           </div>
 
-          <p style={styles.footerNote}>
-            This certificate can be independently verified online using its ID or QR code.
-          </p>
+          {/* QR Code Section */}
+          <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-left text-xs text-slate-400">
+              <p className="font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Scannable QR Verification
+              </p>
+              <p className="text-[11px]">Scan QR code with any mobile camera to verify authenticity.</p>
+            </div>
+
+            <div className="p-2 bg-white rounded-xl shadow-lg border border-slate-700 flex-shrink-0">
+              <img src={qrImageUrl} alt="Certificate Verification QR Code" className="w-24 h-24" />
+            </div>
+          </div>
+
         </div>
-      </article>
-    </main>
+      </motion.div>
+
+    </div>
   );
 }
-
-const SERIF = "'Times New Roman', Times, serif";
-
-const styles = {
-  page: {
-    maxWidth: '1000px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    minHeight: '100vh',
-    background: '#f1f5f9',
-    fontFamily: "'Inter', 'Segoe UI', sans-serif',",
-  },
-  actions: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  back: {
-    color: '#0f172a',
-    textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '0.95rem',
-  },
-  downloadBtn: {
-    border: 'none',
-    borderRadius: '6px',
-    background: '#1D4ED8',
-    color: '#fff',
-    padding: '10px 20px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  downloadErrorText: {
-    color: '#991b1b',
-    background: '#fee2e2',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    fontWeight: '500',
-  },
-
-  /* Mirrors: pdf.rect(24,24,...) stroke #1D4ED8 width 5 */
-  outerBorder: {
-    background: '#F8FAFC',
-    border: '5px solid #1D4ED8',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-    padding: '12px',
-  },
-  /* Mirrors: pdf.rect(36,36,...) stroke #93C5FD width 1 */
-  innerBorder: {
-    border: '1px solid #93C5FD',
-    padding: '48px 56px 36px',
-    textAlign: 'center',
-    minHeight: '520px',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-
-  brand: {
-    color: '#1E3A8A',
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    fontWeight: '700',
-    fontSize: '0.95rem',
-    letterSpacing: '1.5px',
-    margin: '0 0 18px',
-  },
-  heading: {
-    fontFamily: SERIF,
-    fontWeight: '700',
-    fontSize: '2.6rem',
-    color: '#0F172A',
-    margin: '0 0 28px',
-  },
-  bodyText: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#475569',
-    fontSize: '1rem',
-    margin: '0 0 6px',
-  },
-  studentName: {
-    fontFamily: SERIF,
-    fontStyle: 'italic',
-    fontWeight: '700',
-    color: '#1D4ED8',
-    fontSize: '2.2rem',
-    margin: '6px 0 10px',
-  },
-  underline: {
-    height: '1px',
-    background: '#60A5FA',
-    width: '350px',
-    maxWidth: '80%',
-    margin: '0 auto 22px',
-  },
-  courseTitle: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    fontWeight: '700',
-    color: '#0F172A',
-    fontSize: '1.4rem',
-    margin: '8px 0 16px',
-  },
-  requirements: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#475569',
-    fontSize: '0.8rem',
-    maxWidth: '520px',
-    margin: '0 auto',
-  },
-
-  footerRow: {
-    marginTop: 'auto',
-    paddingTop: '32px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    gap: '16px',
-  },
-  signatureBlock: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '230px',
-  },
-  signatureLine: {
-    width: '180px',
-    borderTop: '1px solid #94A3B8',
-    marginBottom: '10px',
-  },
-  instructorName: {
-    fontFamily: SERIF,
-    fontStyle: 'italic',
-    fontWeight: '700',
-    color: '#1E3A8A',
-    fontSize: '1.15rem',
-  },
-  caption: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#64748B',
-    fontSize: '0.7rem',
-    marginTop: '4px',
-  },
-  detailsBlock: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    textAlign: 'left',
-  },
-  detailLabel: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    fontWeight: '700',
-    color: '#0F172A',
-    fontSize: '0.78rem',
-  },
-  detailValue: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#334155',
-    fontSize: '0.85rem',
-    margin: '2px 0 0',
-  },
-  detailValueSmall: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#334155',
-    fontSize: '0.65rem',
-    margin: '2px 0 0',
-    wordBreak: 'break-all',
-  },
-  qrBlock: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  qrImage: {
-    width: '72px',
-    height: '72px',
-  },
-
-  footerNote: {
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    color: '#94A3B8',
-    fontSize: '0.7rem',
-    marginTop: '18px',
-    marginBottom: 0,
-  },
-
-  error: {
-    color: '#991b1b',
-    background: '#fee2e2',
-    padding: '20px',
-    borderRadius: '8px',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  loading: {
-    textAlign: 'center',
-    color: '#475569',
-    fontSize: '1.2rem',
-    marginTop: '40px',
-  },
-};
 
 export default CertificateDetailPage;

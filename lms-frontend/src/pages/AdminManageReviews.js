@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from '../components/LmsLoader';
+import { Star, Trash2, Pencil, X, Check, MessageSquare, Sparkles, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function AdminManageReviews() {
   const [reviews, setReviews] = useState([]);
@@ -10,6 +12,11 @@ function AdminManageReviews() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = () => {
+    setLoading(true);
     axiosInstance.get('/api/courses/reviews/')
       .then(res => {
         setReviews(res.data);
@@ -20,10 +27,10 @@ function AdminManageReviews() {
         setError('Failed to load reviews. Please try again.');
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   const handleDelete = (reviewId) => {
-    if(window.confirm('Are you sure you want to delete this review?')) {
+    if(window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
       axiosInstance.delete(`/api/courses/reviews/${reviewId}/`)
         .then(() => setReviews(prev => prev.filter(r => r.id !== reviewId)))
         .catch(err => {
@@ -40,7 +47,7 @@ function AdminManageReviews() {
 
   const handleEditSubmit = (reviewId) => {
     axiosInstance.patch(`/api/courses/reviews/${reviewId}/`, { comment: editedComment })
-      .then(res => {
+      .then(() => {
         setReviews(prev =>
           prev.map(r => r.id === reviewId ? { ...r, comment: editedComment } : r)
         );
@@ -54,244 +61,140 @@ function AdminManageReviews() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Manage User Reviews</h2>
-        <button style={styles.refreshButton} onClick={() => window.location.reload()}>
-          ↻ Refresh
-        </button>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-amber-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-amber-950/30 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Content Moderation
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            Review Moderation 💬
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Monitor, edit, or remove user-generated course reviews across the platform.
+          </p>
+        </div>
+
+        {!loading && (
+          <div className="px-4 py-2 rounded-2xl bg-amber-600/20 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider self-start md:self-auto">
+            {reviews.length} Review{reviews.length !== 1 ? 's' : ''} Stored
+          </div>
+        )}
+      </motion.div>
 
       {loading ? (
-        <LmsLoader title="Loading reviews" subtitle="Preparing moderation tools" size="lg" />
+        <LmsLoader title="Loading reviews" subtitle="Fetching public user reviews..." size="lg" />
       ) : error ? (
-        <div style={styles.error}>{error}</div>
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+          {error}
+        </div>
       ) : reviews.length === 0 ? (
-        <div style={styles.empty}>No reviews found</div>
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-12 border border-slate-800">
+          <MessageSquare className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Reviews Found</h2>
+          <p className="text-slate-400 text-sm">There are no reviews currently submitted on the platform.</p>
+        </div>
       ) : (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Course</th>
-                <th style={styles.th}>User</th>
-                <th style={styles.th}>Rating</th>
-                <th style={styles.th}>Comment</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.map(review => (
-                <tr key={review.id} style={styles.tr}>
-                  <td style={styles.td}>{review.course_title}</td>
-                  <td style={styles.td}>{review.student}</td>
-                  <td style={styles.td}>
-                    <div style={styles.rating}>
-                      {Array(5).fill().map((_, i) => (
-                        <span key={i} style={i < review.rating ? styles.starFilled : styles.star}>
-                          ★
-                        </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {reviews.map(review => {
+            const isEditingThis = editingReviewId === review.id;
+
+            return (
+              <motion.div
+                key={review.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card overflow-hidden flex flex-col justify-between h-[300px] border border-slate-800 p-6 space-y-4"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star key={star} className={`w-4 h-4 ${star <= review.rating ? 'fill-amber-400' : 'text-slate-700'}`} />
                       ))}
                     </div>
-                  </td>
-                  <td style={styles.td}>
-                    {editingReviewId === review.id ? (
-                      <div style={styles.editGroup}>
-                        <textarea
-                          value={editedComment}
-                          onChange={(e) => setEditedComment(e.target.value)}
-                          style={styles.textarea}
-                        />
-                        <div style={styles.buttonGroup}>
-                          <button 
-                            style={styles.saveButton}
-                            onClick={() => handleEditSubmit(review.id)}
-                          >
-                            Save
-                          </button>
-                          <button
-                            style={styles.cancelButton}
-                            onClick={() => setEditingReviewId(null)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
+
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-white line-clamp-1 mb-2">
+                    {review.course_title || `Course #${review.course}`}
+                  </h3>
+
+                  {isEditingThis ? (
+                    <textarea
+                      rows={3}
+                      value={editedComment}
+                      onChange={e => setEditedComment(e.target.value)}
+                      className="w-full p-2.5 rounded-xl glass-input text-xs text-white placeholder-slate-500 resize-none"
+                    />
+                  ) : (
+                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-4 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                      "{review.comment || 'No written comment.'}"
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-indigo-400" />
+                    <strong className="text-slate-200">{review.student_name || review.student}</strong>
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    {isEditingThis ? (
+                      <>
+                        <button
+                          onClick={() => handleEditSubmit(review.id)}
+                          className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30"
+                          title="Save Edit"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingReviewId(null)}
+                          className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+                          title="Cancel"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     ) : (
-                      <div style={styles.comment}>
-                        {review.comment || <span style={styles.noComment}>—</span>}
-                      </div>
+                      <>
+                        <button
+                          onClick={() => startEditing(review.id, review.comment)}
+                          className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/20"
+                          title="Edit Comment"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(review.id)}
+                          className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20"
+                          title="Delete Review"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
-                  </td>
-                  <td style={styles.td}>
-                    <div style={styles.actionGroup}>
-                      <button
-                        style={styles.editButton}
-                        onClick={() => startEditing(review.id, review.comment)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        style={styles.deleteButton}
-                        onClick={() => handleDelete(review.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 }
-
-const styles = {
-  container: {
-    padding: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem'
-  },
-  title: {
-    color: '#2c3e50',
-    margin: 0
-  },
-  refreshButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    ':hover': {
-      backgroundColor: '#e9ecef'
-    }
-  },
-  tableContainer: {
-    borderRadius: '8px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    backgroundColor: 'white'
-  },
-  th: {
-    padding: '1rem',
-    backgroundColor: '#f8f9fa',
-    borderBottom: '2px solid #e9ecef',
-    textAlign: 'left'
-  },
-  td: {
-    padding: '1rem',
-    borderBottom: '1px solid #e9ecef',
-    verticalAlign: 'top'
-  },
-  tr: {
-    transition: 'background-color 0.2s',
-    ':hover': {
-      backgroundColor: '#f8f9fa'
-    }
-  },
-  rating: {
-    display: 'flex',
-    gap: '0.25rem'
-  },
-  star: {
-    color: '#e9ecef'
-  },
-  starFilled: {
-    color: '#ffd700'
-  },
-  editGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem'
-  },
-  textarea: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #dee2e6',
-    borderRadius: '4px',
-    minHeight: '80px',
-    resize: 'vertical'
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '0.5rem',
-    justifyContent: 'flex-end'
-  },
-  saveButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  },
-  cancelButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#6c757d',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  },
-  comment: {
-    whiteSpace: 'pre-wrap',
-    lineHeight: '1.5'
-  },
-  noComment: {
-    color: '#6c757d'
-  },
-  actionGroup: {
-    display: 'flex',
-    gap: '0.5rem'
-  },
-  editButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  },
-  deleteButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  },
-  loading: {
-    padding: '2rem',
-    textAlign: 'center',
-    color: '#6c757d'
-  },
-  error: {
-    padding: '1rem',
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-    borderRadius: '4px',
-    border: '1px solid #f5c6cb',
-    marginBottom: '1rem'
-  },
-  empty: {
-    padding: '2rem',
-    textAlign: 'center',
-    color: '#6c757d'
-  }
-};
 
 export default AdminManageReviews;

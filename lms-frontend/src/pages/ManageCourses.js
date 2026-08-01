@@ -3,6 +3,7 @@ import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LmsLoader from '../components/LmsLoader';
+import { FolderKanban, PlusCircle, BookOpen, Clock, Signal, Sparkles, Video, ArrowRight } from 'lucide-react';
 
 function ManageCourses() {
   const [courses, setCourses] = useState([]);
@@ -20,301 +21,113 @@ function ManageCourses() {
   }, []);
 
   return (
-    <div style={styles.page}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
       {/* Header */}
-      <div style={styles.header}>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-violet-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-violet-950/30 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
         <div>
-          <h1 style={styles.heading}>My Courses</h1>
-          <p style={styles.subheading}>Create and manage your course content</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Instructor Management
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            My Published Courses 📚
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Manage curriculum, add new lessons, and update course information.
+          </p>
         </div>
-        <Link to="/instructor/create-course" style={styles.createButton}>
-          ➕ New Course
-        </Link>
-      </div>
 
-      {/* Error */}
+        <Link
+          to="/instructor/create-course"
+          className="px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold inline-flex items-center gap-2 self-start md:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" /> Create Course
+        </Link>
+      </motion.div>
+
       {error && (
-        <div style={styles.errorBox}>⚠️ {error}</div>
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-6">
+          {error}
+        </div>
       )}
 
-      {/* Loading */}
       {loading ? (
-        <LmsLoader title="Loading your courses" subtitle="Preparing course management" size="lg" />
+        <LmsLoader title="Loading your courses" subtitle="Retrieving your published content..." size="lg" />
       ) : courses.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <div style={styles.emptyIcon}>📭</div>
-          <h3 style={styles.emptyTitle}>No courses yet</h3>
-          <p style={styles.emptyText}>Start by creating your first course!</p>
-          <Link to="/instructor/create-course" style={styles.createButton}>
-            ➕ Create First Course
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-12 border border-slate-800">
+          <FolderKanban className="w-12 h-12 text-violet-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Courses Created Yet</h2>
+          <p className="text-slate-400 text-sm mb-6">Start building your educational catalog!</p>
+          <Link
+            to="/instructor/create-course"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold"
+          >
+            <PlusCircle className="w-4 h-4" /> Create First Course
           </Link>
         </div>
       ) : (
-        <>
-          <p style={styles.courseCount}>{courses.length} course{courses.length !== 1 ? 's' : ''}</p>
-          <div style={styles.grid}>
-            {courses.map((course, index) => (
-              <motion.div
-                key={course.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08, duration: 0.35 }}
-                className="liquid-glass-card" style={styles.card}
-              >
-                {/* Course Image */}
-                <div style={styles.imageContainer}>
-                  {course.image_url ? (
-                    <img
-                      src={course.image_url}
-                      alt={course.title}
-                      style={styles.image}
-                    />
-                  ) : (
-                    <div style={styles.imagePlaceholder}>
-                      <span style={styles.placeholderIcon}>📚</span>
-                    </div>
-                  )}
-                  <div style={styles.priceBadge}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course, index) => (
+            <motion.div
+              key={course.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="glass-card overflow-hidden flex flex-col justify-between h-[360px] border border-slate-800/80 p-6 hover:border-violet-500/40 transition-all group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-slate-900 text-slate-300 border border-slate-800">
                     ${parseFloat(course.price || 0).toFixed(2)}
-                  </div>
+                  </span>
                 </div>
 
-                {/* Card Body */}
-                <div style={styles.cardBody}>
-                  <h3 style={styles.courseTitle}>{course.title}</h3>
-                  <p style={styles.courseDesc}>
-                    {course.description
-                      ? course.description.length > 100
-                        ? course.description.slice(0, 100) + '…'
-                        : course.description
-                      : 'No description provided'}
-                  </p>
+                <h3 className="text-lg font-bold text-white line-clamp-1 group-hover:text-violet-300 transition-colors mb-2">
+                  {course.title}
+                </h3>
 
-                  <div style={styles.meta}>
-                    <span style={styles.metaItem}>
-                      ⏱ {course.duration}
-                    </span>
-                    <span style={styles.metaItem}>
-                      🎯 {course.difficulty}
-                    </span>
-                    <span style={styles.metaItem}>
-                      📅 {new Date(course.created_at).toLocaleDateString()}
-                    </span>
-                    <span style={styles.metaItem}>
-                      📖 {course.lessons?.length ?? 0} lesson{course.lessons?.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+                <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed mb-4">
+                  {course.description || 'No course description.'}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex gap-2 text-[11px] font-semibold text-slate-400 mb-4 pt-3 border-t border-slate-800">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-cyan-400" /> {course.duration || '6 Weeks'}</span>
+                  <span className="flex items-center gap-1"><Signal className="w-3 h-3 text-indigo-400" /> {course.difficulty || 'Beginner'}</span>
                 </div>
 
-                {/* Card Footer */}
-                <div style={styles.cardFooter}>
+                <div className="flex items-center gap-2">
                   <Link
                     to={`/instructor/manage-lessons/${course.id}`}
-                    style={styles.manageButton}
+                    className="flex-1 py-2 px-3 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-xs font-bold flex items-center justify-center gap-1.5"
                   >
-                    📖 Manage Lessons
+                    <Video className="w-3.5 h-3.5" /> Manage Lessons
                   </Link>
+
                   <Link
-                    to={`/instructor/create-lesson?courseId=${course.id}`}
-                    style={styles.addLessonButton}
+                    to={`/courses/${course.id}`}
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+                    title="Preview Course"
                   >
-                    ➕ Add Lesson
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       )}
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '2rem',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    padding: '2rem',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px',
-    color: 'white'
-  },
-  heading: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    margin: 0,
-    color: 'white'
-  },
-  subheading: {
-    margin: '0.25rem 0 0',
-    opacity: 0.85,
-    fontSize: '1rem'
-  },
-  createButton: {
-    backgroundColor: 'white',
-    color: '#3b82f6',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '700',
-    fontSize: '0.95rem',
-    whiteSpace: 'nowrap'
-  },
-  courseCount: {
-    color: '#64748b',
-    fontSize: '0.95rem',
-    marginBottom: '1rem',
-    paddingLeft: '0.25rem'
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '1.5rem'
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: '14px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'box-shadow 0.2s'
-  },
-  imageContainer: {
-    position: 'relative',
-    height: '180px'
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover'
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e0e7ff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  placeholderIcon: {
-    fontSize: '3.5rem'
-  },
-  priceBadge: {
-    position: 'absolute',
-    top: '12px',
-    right: '12px',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    color: 'white',
-    padding: '0.25rem 0.75rem',
-    borderRadius: '20px',
-    fontSize: '0.85rem',
-    fontWeight: '600'
-  },
-  cardBody: {
-    padding: '1.25rem',
-    flex: 1
-  },
-  courseTitle: {
-    fontSize: '1.15rem',
-    fontWeight: '700',
-    color: '#1e293b',
-    margin: '0 0 0.5rem'
-  },
-  courseDesc: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    lineHeight: 1.55,
-    margin: '0 0 1rem'
-  },
-  meta: {
-    display: 'flex',
-    gap: '1rem',
-    flexWrap: 'wrap'
-  },
-  metaItem: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-    backgroundColor: '#f1f5f9',
-    padding: '0.25rem 0.6rem',
-    borderRadius: '6px'
-  },
-  cardFooter: {
-    padding: '1rem 1.25rem',
-    borderTop: '1px solid #f1f5f9',
-    display: 'flex',
-    gap: '0.75rem'
-  },
-  manageButton: {
-    flex: 1,
-    textAlign: 'center',
-    padding: '0.6rem 0',
-    backgroundColor: '#f1f5f9',
-    color: '#334155',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    fontWeight: '600'
-  },
-  addLessonButton: {
-    flex: 1,
-    textAlign: 'center',
-    padding: '0.6rem 0',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    fontWeight: '600'
-  },
-  errorBox: {
-    backgroundColor: '#fee2e2',
-    color: '#b91c1c',
-    padding: '1rem',
-    borderRadius: '8px',
-    marginBottom: '1.5rem'
-  },
-  emptyBox: {
-    backgroundColor: 'white',
-    borderRadius: '14px',
-    padding: '4rem 2rem',
-    textAlign: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-  },
-  emptyIcon: {
-    fontSize: '4rem',
-    marginBottom: '1rem'
-  },
-  emptyTitle: {
-    fontSize: '1.5rem',
-    color: '#1e293b',
-    margin: '0 0 0.5rem'
-  },
-  emptyText: {
-    color: '#64748b',
-    marginBottom: '1.5rem'
-  },
-  spinner: {
-    width: '48px',
-    height: '48px',
-    border: '5px solid #e2e8f0',
-    borderTopColor: '#3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    margin: '0 auto'
-  }
-};
 
 export default ManageCourses;

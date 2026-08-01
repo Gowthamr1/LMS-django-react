@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, KeyRound, CheckCircle2, Loader2 } from 'lucide-react';
+import { Mail, KeyRound, CheckCircle2, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import axiosInstance from '../axiosInstance';
 
 function VerifyEmail() {
@@ -22,7 +22,7 @@ function VerifyEmail() {
       await axiosInstance.post('/api/users/verify-email/', { email, otp });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Verification failed. Please try again.');
+      setError(err.response?.data?.detail || 'Verification failed. Please check your code and try again.');
     } finally {
       setLoading(false);
     }
@@ -32,14 +32,14 @@ function VerifyEmail() {
     setError('');
     setMessage('');
     if (!email) {
-      setError('Enter your email address first.');
+      setError('Please enter your email address first.');
       return;
     }
 
     setLoading(true);
     try {
       const { data } = await axiosInstance.post('/api/users/resend-verification-email/', { email });
-      setMessage(data.detail);
+      setMessage(data.detail || 'New OTP sent successfully.');
     } catch (err) {
       setError(err.response?.data?.detail || 'Could not resend the code. Please try again.');
     } finally {
@@ -49,143 +49,123 @@ function VerifyEmail() {
 
   if (success) {
     return (
-      <div style={styles.page}>
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
         <motion.div
-          className="liquid-glass-card" style={styles.card}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md glass-card p-8 text-center border border-slate-800 shadow-2xl"
         >
-          <div style={{ ...styles.iconWrap, backgroundColor: '#dcfce7' }}>
-            <CheckCircle2 size={40} color="#22c55e" />
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h2 style={styles.title}>Email verified!</h2>
-          <p style={styles.text}>Your account is ready to use.</p>
-          <Link to="/login" style={styles.button}>Go to Login</Link>
+          <h2 className="text-2xl font-bold text-white mb-2">Email Verified!</h2>
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+            Your email address has been successfully verified. You can now log in to your account.
+          </p>
+          <Link
+            to="/login"
+            className="w-full py-3 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2"
+          >
+            Sign In Now <ArrowRight className="w-4 h-4" />
+          </Link>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <motion.div
-        className="liquid-glass-card" style={styles.card}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-      >
-        <div style={{ ...styles.iconWrap, backgroundColor: '#eff6ff' }}>
-          <Mail size={32} color="#3b82f6" strokeWidth={1.75} />
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md glass-card p-8 sm:p-10 border border-slate-800 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-6 h-6" />
+          </div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Verify Your Email</h2>
+          <p className="text-xs text-slate-400 mt-1">Enter the 6-digit confirmation code sent to your email</p>
         </div>
-        <h2 style={styles.title}>Verify your email</h2>
-        <p style={styles.text}>We sent a six-digit code to your email address. It expires in 10 minutes.</p>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputWrap}>
-            <Mail size={18} style={styles.inputIcon} />
-            <input
-              style={styles.input}
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="email"
-              required
-            />
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {message && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>{message}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                className="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
           </div>
 
-          <div style={styles.otpWrap}>
-            <KeyRound size={16} style={styles.otpIcon} />
-            <input
-              style={styles.otpInput}
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength="6"
-              placeholder="000000"
-              value={otp}
-              onChange={(event) => setOtp(event.target.value.replace(/\D/g, ''))}
-              autoComplete="one-time-code"
-              required
-            />
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              Verification Code (OTP)
+            </label>
+            <div className="relative">
+              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                required
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="123456"
+                className="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-center text-lg tracking-widest font-mono text-white placeholder-slate-500"
+              />
+            </div>
           </div>
 
-          <button style={{ ...styles.button, opacity: loading ? 0.7 : 1 }} type="submit" disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2 mt-2"
+          >
             {loading ? (
-              <span style={styles.buttonContent}>
-                <Loader2 size={18} style={styles.spin} /> Verifying...
-              </span>
-            ) : 'Verify Email'}
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              'Verify Account'
+            )}
           </button>
         </form>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {message && <p style={styles.message}>{message}</p>}
+        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={loading}
+            className="text-indigo-400 hover:text-indigo-300 font-semibold"
+          >
+            Resend OTP Code
+          </button>
+          <Link to="/login" className="text-slate-400 hover:text-slate-200">
+            Back to Login
+          </Link>
+        </div>
 
-        <button style={styles.linkButton} type="button" onClick={handleResend} disabled={loading}>
-          Resend verification code
-        </button>
-        <p style={styles.text}>Already verified? <Link to="/login" style={styles.inlineLink}>Log in</Link></p>
-      </motion.div>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    minHeight: '80vh', padding: '2rem', fontFamily: "'Poppins', sans-serif",
-  },
-  card: {
-    width: '100%', maxWidth: '420px', padding: '3rem 2.5rem', borderRadius: '20px',
-    backgroundColor: 'white', textAlign: 'center',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 6px 12px rgba(0,0,0,0.06), 0 16px 28px rgba(0,0,0,0.08)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-  },
-  iconWrap: {
-    width: '72px', height: '72px', borderRadius: '18px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    marginBottom: '1.25rem',
-  },
-  title: { margin: '0 0 0.5rem', color: '#1e293b', fontSize: '1.4rem', fontWeight: '600' },
-  text: { color: '#64748b', lineHeight: 1.6, fontSize: '0.9rem', margin: 0 },
-  form: { display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem', width: '100%' },
-  inputWrap: { position: 'relative' },
-  inputIcon: { position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
-  input: {
-    width: '100%', padding: '0.85rem 1rem 0.85rem 2.75rem', border: '1px solid #e2e8f0',
-    borderRadius: '10px', fontSize: '1rem', boxSizing: 'border-box', fontFamily: 'inherit',
-  },
-  otpWrap: { position: 'relative' },
-  otpIcon: { position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
-  otpInput: {
-    width: '100%', padding: '0.85rem 1rem', border: '1px solid #e2e8f0',
-    borderRadius: '10px', fontSize: '1.4rem', textAlign: 'center', letterSpacing: '0.5rem',
-    boxSizing: 'border-box', fontFamily: 'inherit',
-  },
-  button: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-    padding: '0.85rem 1.2rem', border: 0, borderRadius: '10px',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white', fontWeight: '600', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'none',
-  },
-  buttonContent: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  spin: { animation: 'spin 1s linear infinite' },
-  error: {
-    marginTop: '1.25rem', padding: '0.75rem', borderRadius: '8px',
-    color: '#991b1b', backgroundColor: '#fee2e2', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box',
-  },
-  message: {
-    marginTop: '1.25rem', padding: '0.75rem', borderRadius: '8px',
-    color: '#166534', backgroundColor: '#dcfce7', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box',
-  },
-  linkButton: {
-    marginTop: '1.25rem', border: 0, padding: 0, background: 'none',
-    color: '#3b82f6', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600',
-  },
-  inlineLink: { color: '#3b82f6', fontWeight: '600' },
-};
 
 export default VerifyEmail;

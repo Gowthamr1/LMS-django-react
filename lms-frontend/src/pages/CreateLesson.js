@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
+import { Sparkles, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function CreateLesson() {
   const navigate = useNavigate();
@@ -10,27 +12,21 @@ function CreateLesson() {
     courseId: searchParams.get('courseId') || '', title: '', content: '', order: 1,
     image: null, video: null, imageUrl: '', videoUrl: '',
   });
-  const [previewImage, setPreviewImage] = useState(null);
-  const [videoName, setVideoName] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState({ courses: true, submitting: false });
 
   useEffect(() => {
     axiosInstance.get('/api/courses/courses/')
       .then(res => setCourses(res.data))
-      .catch(() => setMessage('❌ Failed to load courses.'))
+      .catch(() => setMessage('Failed to load courses.'))
       .finally(() => setLoading(prev => ({ ...prev, courses: false })));
   }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files && files.length > 0) {
-      const file = files[0];
-      if (name === 'image') setPreviewImage(URL.createObjectURL(file));
-      if (name === 'video') setVideoName(file.name);
-      setFormData(prev => ({ ...prev, [name]: file }));
+      setFormData(prev => ({ ...prev, [name]: files[0] }));
     } else {
-      if (name === 'imageUrl') setPreviewImage(value || null);
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
@@ -51,150 +47,133 @@ function CreateLesson() {
 
     try {
       await axiosInstance.post('/api/courses/lessons/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setMessage('✅ Lesson created successfully!');
+      setMessage('Lesson created successfully!');
       setTimeout(() => navigate(`/instructor/manage-lessons/${formData.courseId}`), 1500);
-      setFormData({ courseId: '', title: '', content: '', order: 1, image: null, video: null, imageUrl: '', videoUrl: '' });
-      setPreviewImage(null); setVideoName('');
     } catch (error) {
       const errMsg = error.response?.data ? Object.values(error.response.data).flat().join(' ') : 'Failed to create lesson.';
-      setMessage(`❌ ${errMsg}`);
+      setMessage(errMsg);
     } finally {
       setLoading(prev => ({ ...prev, submitting: false }));
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.heading}>🎬 Create New Lesson</h1>
-        <p style={styles.subheading}>Add a lesson with content, video, and media</p>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-8 glass-panel border border-violet-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-violet-950/40 to-slate-900/90"
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-semibold uppercase tracking-wider mb-3">
+          <Sparkles className="w-3.5 h-3.5" /> Content Module
+        </div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+          Upload Lesson 🎬
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Add video links, text modules, and lesson order to your course syllabus.
+        </p>
+      </motion.div>
 
-      <div className="liquid-glass-card" style={styles.card}>
+      {/* Form Card */}
+      <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
+        
         {message && (
-          <div style={{ ...styles.alert, ...(message.startsWith('✅') ? styles.alertSuccess : styles.alertError) }}>
-            {message}
+          <div className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+            message.includes('successfully') 
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+              : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+          }`}>
+            {message.includes('successfully') ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+            <span>{message}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={styles.group}>
-            <label style={styles.label}>Select Course</label>
-            <select name="courseId" style={styles.input} value={formData.courseId}
-              onChange={handleChange} required disabled={loading.courses}>
-              <option value="">{loading.courses ? 'Loading courses...' : '— Select a course —'}</option>
-              {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Target Course</label>
+            <select
+              name="courseId"
+              required
+              value={formData.courseId}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white bg-slate-900 focus:bg-slate-900"
+            >
+              <option value="" className="bg-slate-900 text-slate-400">Select course...</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.title}</option>
+              ))}
             </select>
           </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Lesson Title</label>
-            <input name="title" style={styles.input} value={formData.title}
-              onChange={handleChange} placeholder="e.g. Introduction to React Hooks" required />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="sm:col-span-3">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Lesson Title</label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="e.g. Introduction to React State"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Lesson Content</label>
-            <textarea name="content" style={{ ...styles.input, height: '150px', resize: 'vertical' }}
-              value={formData.content} onChange={handleChange}
-              placeholder="Enter detailed lesson content here..." required />
-          </div>
-
-          <div style={styles.row}>
-            <div style={{ flex: 1, ...styles.group }}>
-              <label style={styles.label}>Lesson Order</label>
-              <input type="number" name="order" style={styles.input} value={formData.order} min="1"
-                onChange={e => setFormData(prev => ({ ...prev, order: Math.max(1, parseInt(e.target.value) || 1) }))}
-                required />
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Order Sequence</label>
+              <input
+                type="number"
+                name="order"
+                required
+                min={1}
+                value={formData.order}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white text-center"
+              />
             </div>
           </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Video URL (recommended for Render)</label>
-            <input name="videoUrl" type="url" style={styles.input} value={formData.videoUrl}
-              onChange={handleChange} placeholder="https://.../lesson.mp4 or a YouTube/Vimeo URL" />
-            <p style={styles.helpText}>Use a public direct video URL, YouTube, or Vimeo. A URL takes priority over an uploaded file.</p>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Video Embed URL (YouTube/Vimeo)</label>
+            <input
+              type="url"
+              name="videoUrl"
+              value={formData.videoUrl}
+              onChange={handleChange}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+            />
           </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Lesson Video Upload (local only)</label>
-            <input type="file" name="video" accept="video/*" onChange={handleChange} style={styles.fileInput} />
-            {videoName && (
-              <div style={styles.fileTag}>🎬 {videoName}</div>
-            )}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Text Notes & Material</label>
+            <textarea
+              rows={5}
+              name="content"
+              required
+              value={formData.content}
+              onChange={handleChange}
+              placeholder="Write the reading material, instructions, or code snippets for this lesson..."
+              className="w-full p-4 rounded-xl glass-input text-sm text-white placeholder-slate-500 resize-none"
+            />
           </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Image URL (recommended for Render)</label>
-            <input name="imageUrl" type="url" style={styles.input} value={formData.imageUrl}
-              onChange={handleChange} placeholder="https://.../lesson-image.jpg" />
-            <p style={styles.helpText}>Use a public direct image URL. A URL takes priority over an uploaded image.</p>
-          </div>
-
-          <div style={styles.group}>
-            <label style={styles.label}>Lesson Image Upload (local only)</label>
-            <input type="file" name="image" accept="image/*" onChange={handleChange} style={styles.fileInput} />
-            {previewImage ? (
-              <img src={previewImage} alt="Preview" style={styles.preview} />
-            ) : (
-              <div style={styles.placeholder}>
-                <span style={{ fontSize: '1.8rem' }}>🖼️</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.4rem' }}>No image selected</span>
-              </div>
-            )}
-          </div>
-
-          <button style={{ ...styles.btn, opacity: (loading.submitting || loading.courses) ? 0.7 : 1 }}
-            type="submit" disabled={loading.submitting || loading.courses}>
-            {loading.submitting ? 'Creating Lesson...' : '🚀 Create Lesson'}
+          <button
+            type="submit"
+            disabled={loading.submitting}
+            className="w-full py-4 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2 mt-4"
+          >
+            {loading.submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save & Publish Lesson'}
           </button>
         </form>
+
       </div>
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '800px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem', color: 'white',
-  },
-  heading: { fontSize: '2rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.4rem 0 0', fontSize: '1rem' },
-  card: { backgroundColor: 'white', borderRadius: '14px', padding: '2rem', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' },
-  group: { marginBottom: '1.5rem' },
-  row: { display: 'flex', gap: '1.5rem' },
-  label: { display: 'block', fontWeight: '600', color: '#374151', marginBottom: '0.5rem', fontSize: '0.95rem' },
-  input: {
-    width: '100%', padding: '0.8rem', border: '1px solid #e2e8f0',
-    borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box', fontFamily: 'inherit',
-  },
-  fileInput: { display: 'block', marginBottom: '0.75rem', fontSize: '0.95rem' },
-  helpText: { margin: '0.45rem 0 0', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.45 },
-  fileTag: {
-    display: 'inline-block', backgroundColor: '#eff6ff', color: '#3b82f6',
-    padding: '0.35rem 0.8rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600',
-  },
-  preview: { width: '100%', height: '180px', objectFit: 'cover', borderRadius: '10px' },
-  placeholder: {
-    height: '120px', backgroundColor: '#f8fafc', borderRadius: '10px',
-    border: '2px dashed #cbd5e0', display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  btn: {
-    width: '100%', padding: '0.9rem',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white', border: 'none', borderRadius: '8px',
-    fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
-  },
-  alert: { padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: '500' },
-  alertSuccess: { backgroundColor: '#dcfce7', color: '#166534' },
-  alertError: { backgroundColor: '#fee2e2', color: '#991b1b' },
-};
 
 export default CreateLesson;

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { BookOpen, CheckCircle, PlayCircle, Award, Sparkles, ArrowRight, GraduationCap } from 'lucide-react';
 import LmsLoader from '../components/LmsLoader';
 
 function MyCourses() {
@@ -15,170 +17,152 @@ function MyCourses() {
   }, []);
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
-      {/* Header */}
-      <div style={styles.header}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Header Banner */}
+      <div className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 style={styles.heading}>📚 My Learning Journey</h1>
-          <p style={styles.subheading}>Pick up where you left off</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Enrolled Courses
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-1">
+            My Learning Journey
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Pick up right where you left off and track your progress toward certification.
+          </p>
         </div>
+
         {!loading && (
-          <div style={styles.countBadge}>
-            {enrollments.length} course{enrollments.length !== 1 ? 's' : ''} enrolled
+          <div className="px-4 py-2 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider self-start md:self-auto">
+            {enrollments.length} Course{enrollments.length !== 1 ? 's' : ''} Enrolled
           </div>
         )}
       </div>
 
       {loading ? (
-        <LmsLoader title="Loading your courses" subtitle="Bringing your learning journey together" size="lg" />
+        <LmsLoader title="Loading your courses" subtitle="Bringing your learning progress together..." size="lg" />
       ) : enrollments.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <div style={styles.emptyIcon}>🎓</div>
-          <h3 style={styles.emptyTitle}>No courses yet</h3>
-          <p style={styles.emptyText}>Start learning by enrolling in a course!</p>
-          <Link to="/student/browse" style={styles.browseBtn}>Browse Courses →</Link>
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-12 border border-slate-800">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+            <GraduationCap className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">No Enrolled Courses Yet</h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Explore our course catalog and enroll to start building your skills today!
+          </p>
+          <Link
+            to="/student/browse"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold"
+          >
+            Browse Catalog <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       ) : (
-        <div style={styles.grid}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrollments.map(enroll => {
             const pct = enroll.total_lessons > 0
               ? Math.round((enroll.completed_lessons / enroll.total_lessons) * 100)
               : 0;
-            const progressColor = pct === 100 ? '#22c55e' : pct >= 50 ? '#06b6d4' : '#3b82f6';
+            const isCompleted = enroll.completed || pct === 100;
             const lessonToOpen = enroll.completed
               ? enroll.first_lesson_id
               : (enroll.next_lesson_id || enroll.first_lesson_id);
 
             return (
-              <div key={enroll.id} className="liquid-glass-card" style={styles.card}>
-                {/* Top */}
-                <div style={styles.cardTop}>
-                  <div style={styles.courseIcon}>📖</div>
-                  <div style={styles.cardMeta}>
-                    <h3 style={styles.courseTitle}>{enroll.course_title}</h3>
-                    <span style={{
-                      ...styles.statusBadge,
-                      ...(enroll.completed ? styles.statusDone : styles.statusProgress)
-                    }}>
-                      {enroll.completed ? '✅ Completed' : '📖 In Progress'}
+              <motion.div
+                key={enroll.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card overflow-hidden flex flex-col justify-between h-[340px] group border border-slate-800/80 hover:border-indigo-500/40 p-6 transition-all duration-300"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    
+                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                      isCompleted 
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                        : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                    }`}>
+                      {isCompleted ? 'Completed' : 'In Progress'}
                     </span>
                   </div>
+
+                  <h3 className="text-lg font-bold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors mb-2">
+                    {enroll.course_title}
+                  </h3>
+
+                  <p className="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
+                    <span>Instructor:</span>
+                    <span className="text-slate-200 font-medium">{enroll.instructor_name || 'Expert Instructor'}</span>
+                  </p>
+
+                  {/* Progress Bar Container */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                      <span className="text-slate-300">Course Progress</span>
+                      <span className={isCompleted ? 'text-emerald-400' : 'text-indigo-400'}>{pct}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isCompleted
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                            : 'bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-400'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      {enroll.completed_lessons || 0} of {enroll.total_lessons || 0} lessons finished
+                    </p>
+                  </div>
                 </div>
 
-                {/* Progress */}
-                <div style={styles.progressSection}>
-                  <div style={styles.progressLabelRow}>
-                    <span style={styles.progressLabel}>Progress</span>
-                    <span style={{ ...styles.progressPct, color: progressColor }}>{pct}%</span>
-                  </div>
-                  <div style={styles.progressTrack}>
-                    <div style={{ ...styles.progressFill, width: `${pct}%`, backgroundColor: progressColor }}></div>
-                  </div>
-                  <div style={styles.lessonCount}>
-                    {enroll.completed_lessons} / {enroll.total_lessons} lessons complete
-                  </div>
+                {/* Bottom Action */}
+                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between mt-4">
+                  {isCompleted ? (
+                    <Link
+                      to="/student/certificates"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                    >
+                      <Award className="w-4 h-4" /> View Certificate
+                    </Link>
+                  ) : (
+                    <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5 text-indigo-400" /> Continuous Learning
+                    </span>
+                  )}
+
+                  {lessonToOpen ? (
+                    <Link
+                      to={`/lesson/${lessonToOpen}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-500/40 hover:border-indigo-400 transition-all"
+                    >
+                      <PlayCircle className="w-3.5 h-3.5" />
+                      {pct > 0 ? 'Continue' : 'Start'}
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/courses/${enroll.course}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 transition-all"
+                    >
+                      Course Info
+                    </Link>
+                  )}
                 </div>
 
-                {/* CTA */}
-                {lessonToOpen ? (
-                  <Link to={`/lesson/${lessonToOpen}`} style={styles.continueBtn}>
-                    {enroll.completed ? '🔁 Review Course' : '▶ Continue Learning'}
-                  </Link>
-                ) : (
-                  <span style={{ ...styles.continueBtn, opacity: 0.5, cursor: 'not-allowed' }}>
-                    No lessons yet
-                  </span>
-                )}
-                {enroll.completed && (
-                  <Link to="/student/certificates" style={styles.certificateBtn}>
-                    {enroll.certificate_id ? 'Download Certificate' : 'View Certificates'}
-                  </Link>
-                )}
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '1200px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem',
-    color: 'white', display: 'flex', justifyContent: 'space-between',
-    alignItems: 'center', flexWrap: 'wrap', gap: '1rem',
-  },
-  heading: { fontSize: '2rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.25rem 0 0', fontSize: '1rem' },
-  countBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.25rem',
-    borderRadius: '20px', fontWeight: '700', fontSize: '0.95rem',
-  },
-  grid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem',
-  },
-  card: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: '1.25rem',
-  },
-  cardTop: { display: 'flex', alignItems: 'flex-start', gap: '1rem' },
-  courseIcon: {
-    fontSize: '1.5rem', backgroundColor: '#e0f2fe', borderRadius: '10px',
-    width: '44px', height: '44px', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', flexShrink: 0,
-  },
-  cardMeta: { flex: 1 },
-  courseTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.4rem' },
-  statusBadge: { fontSize: '0.78rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '6px' },
-  statusDone: { backgroundColor: '#dcfce7', color: '#166534' },
-  statusProgress: { backgroundColor: '#e0f2fe', color: '#0369a1' },
-  progressSection: {},
-  progressLabelRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' },
-  progressLabel: { fontSize: '0.82rem', color: '#64748b', fontWeight: '600' },
-  progressPct: { fontSize: '0.82rem', fontWeight: '700' },
-  progressTrack: {
-    height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden',
-  },
-  progressFill: { height: '100%', borderRadius: '4px', transition: 'width 0.5s ease' },
-  lessonCount: { fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.35rem' },
-  continueBtn: {
-    display: 'block', textAlign: 'center', padding: '0.7rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', borderRadius: '8px', textDecoration: 'none',
-    fontWeight: '700', fontSize: '0.9rem',
-  },
-  certificateBtn: {
-    display: 'block', textAlign: 'center', padding: '0.7rem',
-    background: '#fef3c7', color: '#92400e', borderRadius: '8px',
-    textDecoration: 'none', fontWeight: '700', fontSize: '0.9rem',
-    border: '1px solid #fcd34d',
-  },
-  emptyBox: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '4rem 2rem',
-    textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  },
-  emptyIcon: { fontSize: '4rem', marginBottom: '1rem' },
-  emptyTitle: { fontSize: '1.5rem', color: '#1e293b', margin: '0 0 0.5rem' },
-  emptyText: { color: '#64748b', marginBottom: '1.5rem' },
-  browseBtn: {
-    display: 'inline-block', padding: '0.75rem 2rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', borderRadius: '8px', textDecoration: 'none', fontWeight: '700',
-  },
-  center: { display: 'flex', justifyContent: 'center', padding: '4rem' },
-  spinner: {
-    width: '48px', height: '48px', border: '5px solid #e2e8f0',
-    borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 1s linear infinite',
-  },
-};
 
 export default MyCourses;

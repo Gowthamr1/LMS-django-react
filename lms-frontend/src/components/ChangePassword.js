@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 import { useAuth } from '../contexts/AuthContext';
+import { KeyRound, Lock, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 function ChangePassword() {
   const navigate = useNavigate();
@@ -58,97 +59,125 @@ function ChangePassword() {
       });
       setSuccess(true);
       setMessage(response.data.detail);
-      window.setTimeout(() => {
+      setTimeout(() => {
         logout();
         navigate('/login');
-      }, 1200);
+      }, 2000);
     } catch (error) {
       setSuccess(false);
-      setMessage(getErrorMessage(error, 'Unable to change your password.'));
+      setMessage(getErrorMessage(error, 'Unable to update password.'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section className="liquid-glass-card" style={styles.card}>
-      <h2 style={styles.title}>Change Password</h2>
-      <p style={styles.description}>Confirm your current password, then use the six-digit code sent to your email.</p>
-
-      <form onSubmit={otpSent ? changePassword : requestCode}>
-        <label style={styles.label}>Current Password</label>
-        <input
-          type="password"
-          autoComplete="current-password"
-          value={oldPassword}
-          onChange={event => setOldPassword(event.target.value)}
-          style={styles.input}
-          required
-        />
-
-        {otpSent && (
-          <>
-            <label style={styles.label}>New Password</label>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={event => setNewPassword(event.target.value)}
-              style={styles.input}
-              required
-            />
-            <label style={styles.label}>Confirm New Password</label>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={event => setConfirmPassword(event.target.value)}
-              style={styles.input}
-              required
-            />
-            <label style={styles.label}>Email Confirmation Code</label>
-            <input
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={otp}
-              onChange={event => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              style={styles.input}
-              placeholder="6-digit code"
-              maxLength="6"
-              required
-            />
-          </>
-        )}
-
-        {message && <div style={{ ...styles.message, ...(success ? styles.success : styles.error) }}>{message}</div>}
-
-        <div style={styles.actions}>
-          <button type="submit" disabled={loading} style={styles.primaryButton}>
-            {loading ? 'Please wait...' : otpSent ? 'Change Password' : 'Send Email Code'}
-          </button>
-          {otpSent && (
-            <button type="button" disabled={loading} onClick={requestCode} style={styles.secondaryButton}>
-              Send New Code
-            </button>
-          )}
+    <div className="glass-card p-6 sm:p-8 border border-slate-800 rounded-2xl">
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800">
+        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <KeyRound className="w-5 h-5" />
         </div>
-      </form>
-    </section>
+        <div>
+          <h3 className="text-lg font-bold text-white">Security & Password</h3>
+          <p className="text-xs text-slate-400">Update your account password using 2-step OTP verification</p>
+        </div>
+      </div>
+
+      {message && (
+        <div className={`p-4 rounded-xl text-xs mb-6 flex items-center gap-2 border ${
+          success 
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+            : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+        }`}>
+          {success ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+          <span>{message}</span>
+        </div>
+      )}
+
+      {!otpSent ? (
+        <form onSubmit={requestCode} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              Current Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="password"
+                required
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="Enter current password to receive OTP"
+                className="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 rounded-xl glass-button-primary text-xs font-bold flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Request OTP Code</>}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={changePassword} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              6-Digit OTP Code
+            </label>
+            <input
+              type="text"
+              required
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="123456"
+              className="w-full py-3 px-4 rounded-xl glass-input text-center text-base tracking-widest font-mono text-white placeholder-slate-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              New Password
+            </label>
+            <input
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="w-full py-3 px-4 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="w-full py-3 px-4 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 rounded-xl glass-button-primary text-xs font-bold flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Password Change'}
+          </button>
+        </form>
+      )}
+
+    </div>
   );
 }
-
-const styles = {
-  card: { backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem', marginTop: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', maxWidth: '620px' },
-  title: { color: '#1e293b', fontSize: '1.35rem', margin: '0 0 0.4rem' },
-  description: { color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem' },
-  label: { display: 'block', color: '#334155', fontWeight: '700', margin: '0.9rem 0 0.4rem', fontSize: '0.9rem' },
-  input: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', font: 'inherit' },
-  actions: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1.25rem' },
-  primaryButton: { border: 'none', borderRadius: '8px', backgroundColor: '#2563eb', color: 'white', padding: '0.7rem 1rem', fontWeight: '700', cursor: 'pointer' },
-  secondaryButton: { border: '1px solid #bfdbfe', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '0.7rem 1rem', fontWeight: '700', cursor: 'pointer' },
-  message: { marginTop: '1rem', padding: '0.75rem', borderRadius: '8px', lineHeight: 1.4 },
-  success: { backgroundColor: '#dcfce7', color: '#166534' },
-  error: { backgroundColor: '#fee2e2', color: '#b91c1c' },
-};
 
 export default ChangePassword;

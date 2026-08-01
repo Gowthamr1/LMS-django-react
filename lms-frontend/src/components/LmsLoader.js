@@ -7,12 +7,16 @@ const SIZE_CONFIG = {
   lg: { diameter: 116, title: '1.25rem', subtitle: '0.98rem', gap: 18 },
 };
 
-/** Shared KokonutUI-inspired loader, styled for the LMS blue/cyan visual system. */
 function LmsLoader({
   title = 'Loading...',
   subtitle = 'Please wait a moment',
   size = 'md',
   compact = false,
+  // Lets this render legibly on top of colored backgrounds (e.g. inside a
+  // solid-blue submit button) without changing the default look anywhere
+  // it's already used with title/subtitle left at their normal dark colors.
+  textColor,
+  subtitleColor,
   style,
 }) {
   const config = SIZE_CONFIG[size] || SIZE_CONFIG.md;
@@ -35,10 +39,20 @@ function LmsLoader({
         <div style={ring('conic-gradient(from 270deg, transparent 0deg, rgba(14,165,233,.9) 22deg, transparent 47deg)', 'radial-gradient(circle, transparent 64%, #000 65%, #000 67%, transparent 68%)', 3.5, false, 0.7)} />
         <div style={styles.centerDot} />
       </motion.div>
-      <div style={{ textAlign: compact ? 'left' : 'center', maxWidth: size === 'lg' ? 310 : 250 }}>
-        <div style={{ ...styles.title, fontSize: config.title, marginBottom: config.gap / 3 }}>{title}</div>
-        {subtitle && <div style={{ ...styles.subtitle, fontSize: config.subtitle }}>{subtitle}</div>}
-      </div>
+      {(title || subtitle) && (
+        <div style={{ textAlign: compact ? 'left' : 'center', maxWidth: size === 'lg' ? 310 : 250 }}>
+          {title && (
+            <div style={{ ...styles.title, fontSize: config.title, marginBottom: config.gap / 3, ...(textColor ? { color: textColor } : {}) }}>
+              {title}
+            </div>
+          )}
+          {subtitle && (
+            <div style={{ ...styles.subtitle, fontSize: config.subtitle, ...(subtitleColor ? { color: subtitleColor } : {}) }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

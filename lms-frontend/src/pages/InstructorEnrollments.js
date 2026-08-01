@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from '../components/LmsLoader';
+import { Users, Calendar, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function InstructorEnrollments() {
   const [enrollments, setEnrollments] = useState([]);
@@ -14,108 +16,92 @@ function InstructorEnrollments() {
   }, []);
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
       {/* Header */}
-      <div style={styles.header}>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-emerald-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-emerald-950/30 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
         <div>
-          <h1 style={styles.heading}>👥 Student Enrollments</h1>
-          <p style={styles.subheading}>Students enrolled in your courses</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Learner Tracking
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            Student Enrollments 👥
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Track student registrations and completion status across your courses.
+          </p>
         </div>
+
         {!loading && (
-          <div style={styles.countBadge}>{enrollments.length} enrollment{enrollments.length !== 1 ? 's' : ''}</div>
+          <div className="px-4 py-2 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-wider self-start md:self-auto">
+            {enrollments.length} Enrollment{enrollments.length !== 1 ? 's' : ''}
+          </div>
         )}
-      </div>
+      </motion.div>
 
       {loading ? (
-        <LmsLoader title="Loading enrollments" subtitle="Finding students in your courses" size="lg" />
+        <LmsLoader title="Loading enrollments" subtitle="Retrieving student registrations..." size="lg" />
       ) : enrollments.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <div style={styles.emptyIcon}>📭</div>
-          <h3 style={styles.emptyTitle}>No enrollments yet</h3>
-          <p style={styles.emptyText}>Students who enroll in your courses will appear here.</p>
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-12 border border-slate-800">
+          <Users className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Enrollments Yet</h2>
+          <p className="text-slate-400 text-sm">
+            When students enroll in your courses, their names and progress will appear here.
+          </p>
         </div>
       ) : (
-        <div style={styles.list}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrollments.map(e => (
-            <div key={e.id} className="liquid-glass-card" style={styles.card}>
-              {/* Avatar */}
-              <div style={styles.avatar}>
-                {(e.student?.[0] || '?').toUpperCase()}
-              </div>
-              <div style={styles.cardBody}>
-                <div style={styles.studentName}>{e.student}</div>
-                <div style={styles.courseName}>{e.course_title || `Course #${e.course}`}</div>
-              </div>
-              <div style={styles.meta}>
-                <div style={styles.metaLabel}>Enrolled on</div>
-                <div style={styles.metaValue}>
-                  {new Date(e.enrolled_on).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            <motion.div
+              key={e.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card p-6 border border-slate-800 flex flex-col justify-between h-[230px] hover:border-emerald-500/40 transition-all"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600/30 text-indigo-300 font-bold flex items-center justify-center border border-indigo-500/40 text-xs">
+                      {(e.student?.[0] || '?').toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">{e.student}</h3>
+                      <p className="text-[11px] text-slate-400">Enrolled Student</p>
+                    </div>
+                  </div>
+
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                    e.completed 
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                      : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40'
+                  }`}>
+                    {e.completed ? 'Completed' : 'In Progress'}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 mt-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Course Enrolled</span>
+                  <h4 className="text-xs font-bold text-white line-clamp-1">{e.course_title || `Course #${e.course}`}</h4>
                 </div>
               </div>
-              <div style={{ ...styles.statusBadge, ...(e.completed ? styles.statusDone : styles.statusProgress) }}>
-                {e.completed ? '✅ Completed' : '📖 In Progress'}
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Enrolled: {new Date(e.enrolled_on).toLocaleDateString()}</span>
+                </span>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '900px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem',
-    color: 'white', display: 'flex', justifyContent: 'space-between',
-    alignItems: 'center', flexWrap: 'wrap', gap: '1rem',
-  },
-  heading: { fontSize: '1.9rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.25rem 0 0', fontSize: '1rem' },
-  countBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.25rem',
-    borderRadius: '20px', fontWeight: '700', fontSize: '1rem',
-  },
-  list: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  card: {
-    backgroundColor: 'white', borderRadius: '12px', padding: '1.25rem 1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex',
-    alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap',
-  },
-  avatar: {
-    width: '46px', height: '46px', borderRadius: '50%',
-    backgroundColor: '#eff6ff', color: '#3b82f6',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '1.2rem', fontWeight: '700', flexShrink: 0,
-  },
-  cardBody: { flex: 1, minWidth: '140px' },
-  studentName: { fontWeight: '700', color: '#1e293b', fontSize: '1rem' },
-  courseName: { color: '#64748b', fontSize: '0.875rem', marginTop: '0.2rem' },
-  meta: { textAlign: 'right', flexShrink: 0 },
-  metaLabel: { color: '#94a3b8', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' },
-  metaValue: { color: '#374151', fontSize: '0.9rem', fontWeight: '600', marginTop: '0.15rem' },
-  statusBadge: { padding: '0.35rem 0.9rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: '700', flexShrink: 0 },
-  statusDone: { backgroundColor: '#dcfce7', color: '#166534' },
-  statusProgress: { backgroundColor: '#eff6ff', color: '#1d4ed8' },
-  emptyBox: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '4rem 2rem',
-    textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  },
-  emptyIcon: { fontSize: '4rem', marginBottom: '1rem' },
-  emptyTitle: { fontSize: '1.5rem', color: '#1e293b', margin: '0 0 0.5rem' },
-  emptyText: { color: '#64748b' },
-  center: { display: 'flex', justifyContent: 'center', padding: '4rem' },
-  spinner: {
-    width: '48px', height: '48px', border: '5px solid #e2e8f0',
-    borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite',
-  },
-};
 
 export default InstructorEnrollments;

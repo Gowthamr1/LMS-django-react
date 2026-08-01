@@ -82,9 +82,9 @@ function ServerWakeup() {
                             Our server is waking up
                         </p>
                         <p style={styles.body}>
-                            We use free-tier hosting that sleeps after inactivity.
-                            First load may take <strong style={{ color: '#06b6d4' }}>10–30 seconds</strong>.
-                            Grab a coffee while you wait! ☕
+                            <strong style={{ color: '#000000' }}>We use free-tier hosting that sleeps after inactivity.
+                            First load may take </strong><strong style={{ color: '#06b6d4' }}>10–30 seconds</strong>.
+                            <strong style={{ color: '#000000' }}>Grab a coffee while you wait! ☕</strong>
                         </p>
 
                         {/* Progress bar */}

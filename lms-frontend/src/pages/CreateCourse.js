@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import { Sparkles, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function CreateCourse() {
   const [title, setTitle] = useState('');
@@ -9,14 +11,16 @@ function CreateCourse() {
   const [difficulty, setDifficulty] = useState('Beginner');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleImageChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) { setImageFile(file); setPreviewUrl(URL.createObjectURL(file)); }
-    else { setImageFile(null); setPreviewUrl(''); }
+    if (file) {
+      setImageFile(file);
+    } else {
+      setImageFile(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -36,12 +40,12 @@ function CreateCourse() {
       await axiosInstance.post('/api/courses/courses/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setMessage('✅ Course created successfully!');
-      setTitle(''); setDescription(''); setPrice(''); setDuration('6 Weeks'); setDifficulty('Beginner'); setImageUrl(''); setImageFile(null); setPreviewUrl('');
+      setMessage('Course created successfully!');
+      setTitle(''); setDescription(''); setPrice(''); setDuration('6 Weeks'); setDifficulty('Beginner'); setImageUrl(''); setImageFile(null);
     } catch (error) {
-      let msg = '❌ Failed to create course.';
-      if (error.response?.status === 401) msg = '❌ Unauthorized. Please login again.';
-      else if (error.response?.data) msg = `❌ ${Object.values(error.response.data).flat().join(' ')}`;
+      let msg = 'Failed to create course.';
+      if (error.response?.status === 401) msg = 'Unauthorized. Please login again.';
+      else if (error.response?.data) msg = Object.values(error.response.data).flat().join(' ');
       setMessage(msg);
     } finally {
       setIsSubmitting(false);
@@ -49,146 +53,143 @@ function CreateCourse() {
   };
 
   return (
-    <div style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.heading}>📘 Create New Course</h1>
-        <p style={styles.subheading}>Fill in the details below to publish your course</p>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-8 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90"
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
+          <Sparkles className="w-3.5 h-3.5" /> Curriculum Creator
+        </div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+          Create New Course 📘
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Publish a new course, set pricing, duration, difficulty, and cover media.
+        </p>
+      </motion.div>
 
-      <div className="liquid-glass-card" style={styles.card}>
+      {/* Form Card */}
+      <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
+        
         {message && (
-          <div style={{ ...styles.alert, ...(message.startsWith('✅') ? styles.alertSuccess : styles.alertError) }}>
-            {message}
+          <div className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+            message.includes('successfully') 
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+              : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+          }`}>
+            {message.includes('successfully') ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+            <span>{message}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={styles.group}>
-            <label style={styles.label}>Course Title</label>
-            <input style={styles.input} value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Advanced Web Development" required />
-          </div>
-
-          <div style={styles.group}>
-            <label style={styles.label}>Description</label>
-            <textarea style={{ ...styles.input, height: '130px', resize: 'vertical' }}
-              value={description} onChange={e => setDescription(e.target.value)}
-              placeholder="Describe your course content and objectives..." required />
-          </div>
-
-          <div style={styles.group}>
-            <label style={styles.label}>Price (USD)</label>
-            <div style={{ position: 'relative' }}>
-              <span style={styles.prefix}>$</span>
-              <input style={{ ...styles.input, paddingLeft: '2rem' }} type="number"
-                value={price} onChange={e => setPrice(e.target.value)}
-                step="0.01" min="0" placeholder="0.00" required />
-            </div>
-          </div>
-
-          <div style={styles.selectRow}>
-            <div style={{ ...styles.group, flex: 1 }}>
-              <label style={styles.label}>Course Duration</label>
-              <select style={styles.input} value={duration} onChange={e => setDuration(e.target.value)}>
-                {['2 Weeks', '4 Weeks', '6 Weeks', '8 Weeks', '12 Weeks'].map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ ...styles.group, flex: 1 }}>
-              <label style={styles.label}>Difficulty</label>
-              <select style={styles.input} value={difficulty} onChange={e => setDifficulty(e.target.value)}>
-                {['Beginner', 'Intermediate', 'Advanced'].map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={styles.group}>
-            <label style={styles.label}>Course Thumbnail URL (recommended for Render)</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Course Title</label>
             <input
-              type="url"
-              value={imageUrl}
-              onChange={event => { setImageUrl(event.target.value); setPreviewUrl(event.target.value || ''); }}
-              style={styles.input}
-              placeholder="https://.../course-thumbnail.jpg"
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Master Full-Stack Web Development"
+              className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
             />
-            <p style={styles.helpText}>Use a public direct image URL. It takes priority over an uploaded image.</p>
           </div>
 
-          <div style={styles.group}>
-            <label style={styles.label}>Course Thumbnail Upload (local only)</label>
-            <input type="file" accept="image/*" onChange={handleImageChange} style={styles.fileInput} />
-            {previewUrl ? (
-              <img src={previewUrl} alt="Preview" style={styles.preview} />
-            ) : (
-              <div style={styles.placeholder}>
-                <span style={{ fontSize: '2rem' }}>🖼️</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-                  16:9 aspect ratio recommended
-                </span>
-              </div>
-            )}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Description</label>
+            <textarea
+              rows={4}
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide a comprehensive summary of what students will learn..."
+              className="w-full p-4 rounded-xl glass-input text-sm text-white placeholder-slate-500 resize-none"
+            />
           </div>
 
-          <button style={{ ...styles.btn, opacity: isSubmitting ? 0.7 : 1 }} type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : '🚀 Create Course'}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Price ($ USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00 (Free)"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Duration</label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white bg-slate-900 focus:bg-slate-900"
+              >
+                <option value="2 Weeks" className="bg-slate-900 text-white">2 Weeks</option>
+                <option value="4 Weeks" className="bg-slate-900 text-white">4 Weeks</option>
+                <option value="6 Weeks" className="bg-slate-900 text-white">6 Weeks</option>
+                <option value="8 Weeks" className="bg-slate-900 text-white">8 Weeks</option>
+                <option value="12 Weeks" className="bg-slate-900 text-white">12 Weeks</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Difficulty Level</label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white bg-slate-900 focus:bg-slate-900"
+              >
+                <option value="Beginner" className="bg-slate-900 text-white">Beginner</option>
+                <option value="Intermediate" className="bg-slate-900 text-white">Intermediate</option>
+                <option value="Advanced" className="bg-slate-900 text-white">Advanced</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">External Image URL (Optional)</label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/photo-..."
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Upload Cover File (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/30 file:text-indigo-300"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2 mt-4"
+          >
+            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Course'}
           </button>
         </form>
+
       </div>
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '800px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem', color: 'white',
-  },
-  heading: { fontSize: '2rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.4rem 0 0', fontSize: '1rem' },
-  card: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '2rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-  },
-  group: { marginBottom: '1.5rem' },
-  selectRow: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
-  helpText: { margin: '0.45rem 0 0', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.45 },
-  label: { display: 'block', fontWeight: '600', color: '#374151', marginBottom: '0.5rem', fontSize: '0.95rem' },
-  input: {
-    width: '100%', padding: '0.8rem', border: '1px solid #e2e8f0',
-    borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box',
-    fontFamily: 'inherit',
-  },
-  prefix: {
-    position: 'absolute', left: '12px', top: '50%',
-    transform: 'translateY(-50%)', color: '#94a3b8',
-  },
-  fileInput: { display: 'block', marginBottom: '0.75rem', fontSize: '0.95rem' },
-  preview: {
-    width: '100%', height: '200px', objectFit: 'cover',
-    borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  },
-  placeholder: {
-    height: '200px', backgroundColor: '#f8fafc', borderRadius: '10px',
-    border: '2px dashed #cbd5e0', display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-  },
-  btn: {
-    width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem',
-    fontWeight: '700', cursor: 'pointer',
-  },
-  alert: { padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: '500' },
-  alertSuccess: { backgroundColor: '#dcfce7', color: '#166534' },
-  alertError: { backgroundColor: '#fee2e2', color: '#991b1b' },
-};
 
 export default CreateCourse;

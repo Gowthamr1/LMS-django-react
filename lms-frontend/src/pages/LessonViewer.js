@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from '../components/LmsLoader';
+import { BookOpen, Video as VideoIcon, CheckCircle2, Brain, ArrowLeft, Award, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function getEmbedUrl(videoUrl) {
   if (!videoUrl) return null;
@@ -41,7 +43,6 @@ export default function LessonViewer() {
       try {
         const lessonRes = await axiosInstance.get(`/api/courses/lessons/${id}/`);
         setLesson(lessonRes.data);
-        // lesson.progress returns 0 or 100 from LessonSerializer.get_progress
         setIsCompleted(lessonRes.data.progress === 100);
 
         const quizRes = await axiosInstance.get(`/api/courses/quizzes/?lesson=${id}`);
@@ -55,200 +56,143 @@ export default function LessonViewer() {
     loadData();
   }, [id]);
 
-  if (loading) return (
-    <div style={styles.loadingPage}><LmsLoader title="Loading lesson" subtitle="Preparing your learning material" size="lg" /></div>
-  );
+  if (loading) {
+    return <LmsLoader title="Loading lesson" subtitle="Preparing learning material..." size="lg" />;
+  }
 
-  if (!lesson) return (
-    <div style={styles.loadingPage}>
-      <p style={styles.loadingText}>Lesson not found.</p>
-    </div>
-  );
+  if (!lesson) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-slate-400">
+        <p>Lesson not found.</p>
+      </div>
+    );
+  }
 
   const imageSource = lesson.image_url || lesson.image;
   const videoSource = lesson.video_url || lesson.video;
   const embeddedVideoUrl = getEmbedUrl(videoSource);
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerTop}>
-          <h1 style={styles.lessonTitle}>{lesson.title}</h1>
-          {isCompleted && <div style={styles.completedBadge}>✅ Completed</div>}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-8 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/95 via-indigo-950/40 to-slate-900/95"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Lesson Module</span>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-1">
+              {lesson.title}
+            </h1>
+          </div>
+
+          <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border flex items-center gap-1 self-start sm:self-auto ${
+            isCompleted 
+              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+              : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40'
+          }`}>
+            {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
+            {isCompleted ? 'Completed' : 'In Progress'}
+          </span>
         </div>
 
-        {/* Progress bar */}
-        <div style={styles.progressRow}>
-          <span style={styles.progressLabel}>Lesson Progress</span>
-          <div style={styles.progressTrack}>
-            <div style={{
-              ...styles.progressFill,
-              width: isCompleted ? '100%' : '0%',
-              backgroundColor: isCompleted ? '#22c55e' : '#06b6d4',
-            }}></div>
+        {/* Progress Bar */}
+        <div className="space-y-1.5 pt-2">
+          <div className="flex justify-between text-xs font-semibold">
+            <span className="text-slate-300">Module Status</span>
+            <span className={isCompleted ? 'text-emerald-400' : 'text-cyan-400'}>{isCompleted ? '100%' : '0%'}</span>
           </div>
-          <span style={styles.progressPct}>{isCompleted ? '100%' : '0%'}</span>
+          <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isCompleted ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-indigo-500'
+              }`}
+              style={{ width: isCompleted ? '100%' : '0%' }}
+            />
+          </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Content */}
-      <div style={styles.contentArea}>
-        {/* Image */}
-        {imageSource && (
-          <div style={styles.mediaBox}>
-            <img src={imageSource} alt={lesson.title} style={styles.lessonImage} />
-          </div>
-        )}
-
-        {/* Video */}
+      {/* Main Lesson Content Container */}
+      <div className="space-y-8">
+        
+        {/* Media Frame (Video or Image) */}
         {videoSource && (
-          <div style={styles.mediaBox}>
+          <div className="glass-panel rounded-3xl overflow-hidden border border-slate-800 shadow-2xl aspect-video bg-slate-950">
             {embeddedVideoUrl ? (
               <iframe
                 src={embeddedVideoUrl}
                 title={`${lesson.title} video`}
-                style={styles.videoPlayer}
+                className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             ) : (
-              <video src={videoSource} style={styles.videoPlayer} controls />
+              <video src={videoSource} className="w-full h-full object-contain" controls />
             )}
           </div>
         )}
 
-        {/* Text Content */}
-        <div className="liquid-glass-card" style={styles.contentCard}>
-          <h3 style={styles.contentHeading}>📝 Lesson Content</h3>
-          <div style={styles.contentBody}>
-            {lesson.content.split('\n').map((para, i) => (
-              para.trim() ? <p key={i} style={styles.para}>{para}</p> : null
-            ))}
+        {imageSource && !videoSource && (
+          <div className="glass-panel rounded-3xl overflow-hidden border border-slate-800 shadow-2xl max-h-[450px]">
+            <img src={imageSource} alt={lesson.title} className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        {/* Text Notes */}
+        <div className="glass-card p-6 sm:p-10 border border-slate-800 rounded-3xl space-y-4">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2 pb-3 border-b border-slate-800">
+            <BookOpen className="w-5 h-5 text-indigo-400" /> Lesson Content & Notes
+          </h3>
+
+          <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+            {lesson.content ? (
+              lesson.content.split('\n').map((para, i) => (
+                para.trim() ? <p key={i}>{para}</p> : null
+              ))
+            ) : (
+              <p className="text-slate-500 italic">No text notes attached to this lesson module.</p>
+            )}
           </div>
         </div>
 
-        {/* Quiz CTA - Show if they haven't gotten 100% yet */}
+        {/* Quiz CTA Banner */}
         {quizCount > 0 && !lesson.perfect_score_achieved && (
-          <div style={styles.quizCta}>
+          <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-indigo-950/40">
             <div>
-              <p style={styles.quizCtaTitle}>🧠 Knowledge Check</p>
-              <p style={styles.quizCtaText}>
+              <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                <Brain className="w-5 h-5 text-indigo-400" /> Knowledge Check Assessment
+              </h4>
+              <p className="text-xs text-slate-400 mt-1">
                 {isCompleted 
-                  ? "✅ You passed! Want to try for a perfect score?" 
-                  : `${quizCount} quiz${quizCount !== 1 ? 'zes' : ''} available for this lesson.`}
+                  ? "You passed! Retake the quiz anytime to practice." 
+                  : `${quizCount} quiz module${quizCount !== 1 ? 's' : ''} available for this lesson.`}
               </p>
             </div>
-            <Link to={`/student/quizzes/${id}`} style={styles.quizCtaBtn}>
-              {isCompleted ? '↻ Retake Quiz' : 'Take Quiz →'}
+
+            <Link
+              to={`/student/quizzes/${id}`}
+              className="px-6 py-3 rounded-xl glass-button-primary text-xs font-bold whitespace-nowrap flex items-center gap-2"
+            >
+              <Brain className="w-4 h-4" /> {isCompleted ? 'Retake Quiz' : 'Take Quiz Now'}
             </Link>
           </div>
         )}
 
-        {/* Perfect Score Celebration! - Shows only when they get 100% */}
-        {quizCount > 0 && lesson.perfect_score_achieved && (
-          <div style={styles.completedBox}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🏆</div>
-            <p style={styles.completedText}>Perfect Score! You aced all quizzes in this lesson.</p>
+        {/* Perfect Score Badge */}
+        {lesson.perfect_score_achieved && (
+          <div className="p-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-2">
+            <Award className="w-8 h-8 text-emerald-400 mx-auto" />
+            <h4 className="text-base font-bold text-white">Module Mastery Achieved!</h4>
+            <p className="text-xs text-slate-300">You scored 100% on the lesson quiz.</p>
           </div>
         )}
 
-        {isCompleted && quizCount === 0 && (
-          <div style={styles.completedBox}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎉</div>
-            <p style={styles.completedText}>You've completed this lesson!</p>
-          </div>
-        )}
       </div>
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '900px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem', color: 'white',
-  },
-  headerTop: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-    gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem',
-  },
-  lessonTitle: { fontSize: '1.75rem', fontWeight: '700', margin: 0, flex: 1 },
-  completedBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.25rem',
-    borderRadius: '20px', fontWeight: '700', fontSize: '0.95rem', flexShrink: 0,
-  },
-  progressRow: {
-    display: 'flex', alignItems: 'center', gap: '1rem',
-  },
-  progressLabel: { fontSize: '0.85rem', opacity: 0.85, whiteSpace: 'nowrap' },
-  progressTrack: {
-    flex: 1, height: '8px', backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: '4px', overflow: 'hidden',
-  },
-  progressFill: { height: '100%', borderRadius: '4px', transition: 'width 0.6s ease' },
-  progressPct: { fontSize: '0.85rem', fontWeight: '700', opacity: 0.9, minWidth: '36px', textAlign: 'right' },
-  contentArea: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-  mediaBox: {
-    borderRadius: '14px', overflow: 'hidden',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-  },
-  lessonImage: { width: '100%', height: 'auto', display: 'block' },
-  videoPlayer: { width: '100%', height: '420px', display: 'block', backgroundColor: '#000' },
-  contentCard: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '2rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-  },
-  contentHeading: {
-    fontSize: '1.2rem', fontWeight: '700', color: '#1e293b',
-    margin: '0 0 1.25rem', paddingBottom: '0.75rem', borderBottom: '2px solid #f1f5f9',
-  },
-  contentBody: {},
-  para: { color: '#475569', lineHeight: 1.75, fontSize: '1rem', marginBottom: '1rem' },
-  quizCta: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex',
-    justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem',
-  },
-  quizCtaTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.25rem' },
-  quizCtaText: { color: '#64748b', margin: 0, fontSize: '0.9rem' },
-  quizCtaBtn: {
-    padding: '0.75rem 1.75rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', borderRadius: '8px', textDecoration: 'none',
-    fontWeight: '700', fontSize: '0.95rem', flexShrink: 0,
-  },
-  completeCta: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', textAlign: 'center',
-  },
-  ctaText: { color: '#64748b', marginBottom: '1rem', fontSize: '1rem' },
-  ctaBtn: {
-    padding: '0.8rem 2rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', border: 'none', borderRadius: '8px',
-    fontWeight: '700', cursor: 'pointer', fontSize: '1rem',
-  },
-  completedBox: {
-    backgroundColor: '#f0fdf4', borderRadius: '14px', padding: '2rem',
-    textAlign: 'center', border: '1px solid #bbf7d0',
-  },
-  completedText: { color: '#166534', fontWeight: '700', fontSize: '1.1rem', margin: 0 },
-  loadingPage: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc',
-  },
-  spinner: {
-    width: '48px', height: '48px', border: '5px solid #e2e8f0',
-    borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 1s linear infinite',
-    marginBottom: '1rem',
-  },
-  loadingText: { color: '#64748b', fontSize: '1.1rem', fontStyle: 'italic' },
-};

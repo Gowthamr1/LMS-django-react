@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from './LmsLoader';
+import { Brain, CheckCircle2, AlertCircle, RefreshCw, ArrowLeft, Award, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function Quizzes() {
   const { lessonId } = useParams();
@@ -53,193 +55,152 @@ function Quizzes() {
     });
   };
 
-  if (loading) return (
-    <div style={styles.loadingPage}><LmsLoader title="Loading quiz" subtitle="Preparing your knowledge check" size="lg" /></div>
-  );
+  if (loading) {
+    return <LmsLoader title="Loading quiz" subtitle="Preparing your knowledge assessment..." size="lg" />;
+  }
 
   return (
-    <div style={styles.page}>
-      <Link to={`/lesson/${lessonId}`} style={styles.backLink}>← Back to lesson</Link>
-      <h2 style={styles.quizSectionTitle}>🧠 Knowledge Check</h2>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      <Link
+        to={`/lesson/${lessonId}`}
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Lesson
+      </Link>
+
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-8 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90"
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
+          <Sparkles className="w-3.5 h-3.5" /> Knowledge Assessment
+        </div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+          Lesson Quiz 🧠
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Test your understanding of this module. Scoring 100% unlocks course completion.
+        </p>
+      </motion.div>
 
       {quizzes.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <p style={styles.emptyText}>No quizzes for this lesson yet.</p>
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-8 border border-slate-800">
+          <Brain className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Quizzes for this Lesson</h2>
+          <p className="text-slate-400 text-sm mb-6">
+            This lesson is text/video based. You can directly proceed with your learning.
+          </p>
+          <Link to={`/lesson/${lessonId}`} className="px-5 py-2.5 rounded-xl glass-button-primary text-xs font-bold">
+            Return to Lesson
+          </Link>
         </div>
       ) : (
-        quizzes.map(quiz => {
-          const total = quiz.questions.length;
-          const score = scores[quiz.id];
-          const isPerfect = submitted[quiz.id] && score === total;
-          const passed = submitted[quiz.id] && total > 0 && (score / total) >= 0.7;
+        <div className="space-y-8">
+          {quizzes.map(quiz => {
+            const isSubbed = submitted[quiz.id];
+            const score = scores[quiz.id];
+            const totalQs = quiz.questions?.length || 0;
+            const isPerfect = isSubbed && score === totalQs;
 
-          return (
-            <div key={quiz.id} className="liquid-glass-card" style={styles.quizCard}>
-              <div style={styles.quizHeader}>
-                <h3 style={styles.quizTitle}>{quiz.title}</h3>
-                {submitted[quiz.id] && (
-                  <div style={{
-                    ...styles.scoreBadge,
-                    backgroundColor: isPerfect ? '#22c55e' : passed ? '#06b6d4' : '#f87171',
-                  }}>
-                    {isPerfect ? '🏆' : '📊'} {score}/{total}
-                  </div>
-                )}
-              </div>
-
-              {quiz.questions.map((q, qi) => (
-                <div key={q.id} className="liquid-glass-card" style={styles.questionCard}>
-                  <p style={styles.questionText}>
-                    <span style={styles.questionNum}>Q{qi + 1}.</span> {q.text}
-                  </p>
-                  <div style={styles.optionsGrid}>
-                    {['A', 'B', 'C', 'D'].map(opt => {
-                      const isCorrect = q.correct_answer === opt;
-                      const isSelected = answers[quiz.id]?.[q.id] === opt;
-                      const showAnswer = submitted[quiz.id];
-                      return (
-                        <label key={opt} style={{
-                          ...styles.optionLabel,
-                          ...(isSelected && !showAnswer ? styles.optionSelected : {}),
-                          ...(showAnswer && isCorrect ? styles.optionCorrect : {}),
-                          ...(showAnswer && isSelected && !isCorrect ? styles.optionWrong : {}),
-                          cursor: submitted[quiz.id] ? 'default' : 'pointer',
-                        }}>
-                          <input type="radio"
-                            name={`quiz-${quiz.id}-q-${q.id}`}
-                            value={opt}
-                            checked={isSelected}
-                            onChange={() => handleAnswer(quiz.id, q.id, opt)}
-                            disabled={submitted[quiz.id]}
-                            style={{ display: 'none' }}
-                          />
-                          <span style={styles.optionLetter}>{opt}</span>
-                          <span>{q[`choice_${opt.toLowerCase()}`]}</span>
-                          {showAnswer && isCorrect && <span style={styles.checkIcon}>✔️</span>}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {!submitted[quiz.id] ? (
-                <button style={styles.submitQuizBtn} onClick={() => handleSubmitQuiz(quiz)}>
-                  Submit Quiz 🚀
-                </button>
-              ) : (
-                <div style={styles.resultArea}>
-                  {/* Result message */}
-                  <div style={{
-                    ...styles.resultBox,
-                    ...(isPerfect ? styles.resultPerfect : passed ? styles.resultPass : styles.resultFail)
-                  }}>
-                    {isPerfect
-                      ? '🎉 Perfect score! You aced this quiz.'
-                      : passed
-                        ? '✅ Passed! (70%+) — Lesson marked complete.'
-                        : '📖 You need 70%+ to pass. Review and try again!'}
+            return (
+              <div key={quiz.id} className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
+                
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">{quiz.title}</h2>
+                    <p className="text-xs text-slate-400 mt-1">{totalQs} Multiple Choice Questions</p>
                   </div>
 
-                  {/* ✅ Try Again only shown when NOT perfect score */}
-                  {!isPerfect && (
-                    <button style={styles.tryAgainBtn} onClick={() => handleTryAgain(quiz.id)}>
-                      ↻ Try Again
-                    </button>
+                  {isSubbed && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase border ${
+                      isPerfect 
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                        : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                    }`}>
+                      Score: {score} / {totalQs}
+                    </span>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })
+
+                {/* Questions */}
+                <div className="space-y-6">
+                  {quiz.questions.map((q, idx) => {
+                    const selected = answers[quiz.id]?.[q.id];
+                    const isCorrect = isSubbed && selected === q.correct_answer;
+
+                    return (
+                      <div key={q.id} className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                        <p className="text-sm font-bold text-white flex items-start gap-2">
+                          <span className="text-indigo-400 font-mono">Q{idx + 1}.</span>
+                          <span>{q.text}</span>
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                          {['A', 'B', 'C', 'D'].map(choiceKey => {
+                            const choiceText = q[`choice_${choiceKey.toLowerCase()}`];
+                            const isThisSelected = selected === choiceKey;
+
+                            let btnStyle = "bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700";
+                            if (isThisSelected) btnStyle = "bg-indigo-600/30 border-indigo-500 text-white font-bold";
+                            if (isSubbed && choiceKey === q.correct_answer) btnStyle = "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold";
+
+                            return (
+                              <button
+                                key={choiceKey}
+                                type="button"
+                                disabled={isSubbed}
+                                onClick={() => handleAnswer(quiz.id, q.id, choiceKey)}
+                                className={`p-3 rounded-xl border text-xs text-left transition-all flex items-center gap-2 ${btnStyle}`}
+                              >
+                                <span className="w-5 h-5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-mono font-bold text-[10px] flex-shrink-0">
+                                  {choiceKey}
+                                </span>
+                                <span>{choiceText}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Submit / Retry Actions */}
+                <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                  {!isSubbed ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSubmitQuiz(quiz)}
+                      className="w-full py-3.5 px-4 rounded-xl glass-button-primary text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Submit Quiz Attempt
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <p className="text-xs text-slate-300">
+                        {isPerfect ? '🎉 Perfect score! Lesson completed.' : 'You scored under 100%. You can try again.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleTryAgain(quiz.id)}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Retake Quiz
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
       )}
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '900px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  backLink: {
-    display: 'inline-block', marginBottom: '1.25rem', color: '#3b82f6',
-    fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem',
-  },
-  quizSectionTitle: {
-    fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: '0 0 1.25rem',
-  },
-  emptyBox: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '2.5rem',
-    textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-  },
-  emptyText: { color: '#64748b', fontSize: '1rem', margin: 0 },
-  quizCard: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '1.5rem',
-  },
-  quizHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem',
-  },
-  quizTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#1e293b', margin: 0 },
-  scoreBadge: {
-    color: 'white', padding: '0.35rem 1rem',
-    borderRadius: '20px', fontSize: '0.875rem', fontWeight: '700',
-  },
-  questionCard: {
-    borderLeft: '4px solid #e0f2fe', padding: '1rem 1.25rem',
-    marginBottom: '1.25rem', backgroundColor: '#f8fafc', borderRadius: '8px',
-  },
-  questionText: { fontSize: '1rem', color: '#1e293b', marginBottom: '0.75rem' },
-  questionNum: { fontWeight: '800', color: '#06b6d4', marginRight: '0.4rem' },
-  optionsGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem',
-  },
-  optionLabel: {
-    display: 'flex', alignItems: 'center', gap: '0.75rem',
-    padding: '0.85rem 1rem', borderRadius: '8px',
-    backgroundColor: 'white', border: '2px solid #e2e8f0',
-  },
-  optionSelected: { borderColor: '#06b6d4', backgroundColor: '#ecfeff' },
-  optionCorrect: { borderColor: '#22c55e', backgroundColor: '#f0fdf4' },
-  optionWrong: { borderColor: '#f87171', backgroundColor: '#fff5f5' },
-  optionLetter: {
-    width: '28px', height: '28px', borderRadius: '50%',
-    backgroundColor: '#e0f2fe', color: '#0369a1',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: '800', fontSize: '0.85rem', flexShrink: 0,
-  },
-  checkIcon: { marginLeft: 'auto', color: '#22c55e' },
-  submitQuizBtn: {
-    padding: '0.85rem 2rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', border: 'none', borderRadius: '8px',
-    fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
-  },
-  resultArea: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  resultBox: {
-    padding: '1rem 1.5rem', borderRadius: '8px', fontWeight: '600', fontSize: '1rem',
-  },
-  resultPerfect: { backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' },
-  resultPass: { backgroundColor: '#eff6ff', color: '#1d4ed8' },
-  resultFail: { backgroundColor: '#fff7ed', color: '#9a3412' },
-  tryAgainBtn: {
-    padding: '0.75rem 1.75rem', backgroundColor: 'white',
-    color: '#3b82f6', border: '2px solid #3b82f6',
-    borderRadius: '8px', fontSize: '0.95rem',
-    fontWeight: '700', cursor: 'pointer', alignSelf: 'flex-start',
-  },
-  loadingPage: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc',
-  },
-  spinner: {
-    width: '48px', height: '48px', border: '5px solid #e2e8f0',
-    borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 1s linear infinite',
-    marginBottom: '1rem',
-  },
-  loadingText: { color: '#64748b', fontSize: '1.1rem', fontStyle: 'italic' },
-};
 
 export default Quizzes;

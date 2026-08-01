@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from '../components/LmsLoader';
+import { Video, PlusCircle, Pencil, Trash2, Check, ArrowLeft, Sparkles, Brain, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function ManageLessons() {
   const { courseId } = useParams();
@@ -12,7 +14,6 @@ function ManageLessons() {
   const [editingLesson, setEditingLesson] = useState(null);
   const [editData, setEditData] = useState({ title: '', content: '', order: 1, image_url: '', video_url: '' });
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,129 +63,195 @@ function ManageLessons() {
     }
   };
 
-  const deleteLesson = async (lesson) => {
-    if (!window.confirm(`Delete "${lesson.title}"? This cannot be undone.`)) return;
-    setDeletingId(lesson.id);
-    setError('');
+  const deleteLesson = async (lessonId) => {
+    if (!window.confirm('Delete this lesson permanently?')) return;
     try {
-      await axiosInstance.delete(`/api/courses/lessons/${lesson.id}/`);
-      setLessons(current => current.filter(item => item.id !== lesson.id));
+      await axiosInstance.delete(`/api/courses/lessons/${lessonId}/`);
+      setLessons(current => current.filter(lesson => lesson.id !== lessonId));
     } catch (err) {
       setError(err.response?.data?.detail || 'Unable to delete this lesson.');
-    } finally {
-      setDeletingId(null);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      <Link
+        to="/instructor/my-courses"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to My Courses
+      </Link>
 
-      <div style={styles.header}>
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-violet-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-violet-950/40 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
         <div>
-          <h1 style={styles.heading}>Manage Lessons</h1>
-          <p style={styles.subheading}>{courseTitle || 'Loading course...'}</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Module Management
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            {courseTitle || 'Course Lessons'}
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Reorder, edit, or delete lesson modules for this course.
+          </p>
         </div>
-        <Link to={`/instructor/create-lesson?courseId=${courseId}`} style={styles.addButton}>Add Lesson</Link>
-      </div>
 
-      {error && <div style={styles.errorBox}>{error}</div>}
+        <Link
+          to={`/instructor/create-lesson?courseId=${courseId}`}
+          className="px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold inline-flex items-center gap-2 self-start md:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" /> Add Lesson
+        </Link>
+      </motion.div>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-6">
+          {error}
+        </div>
+      )}
 
       {loading ? (
-        <LmsLoader title="Loading lessons" subtitle="Preparing your course content" size="lg" />
+        <LmsLoader title="Loading lessons" subtitle="Fetching course modules..." size="lg" />
       ) : lessons.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <h3 style={styles.emptyTitle}>No lessons yet</h3>
-          <p style={styles.emptyText}>Start adding lessons to this course.</p>
-          <Link to={`/instructor/create-lesson?courseId=${courseId}`} style={styles.addButton}>Add First Lesson</Link>
+        <div className="glass-card p-12 text-center max-w-md mx-auto my-12 border border-slate-800">
+          <Video className="w-12 h-12 text-violet-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">No Lessons in this Course</h2>
+          <p className="text-slate-400 text-sm mb-6">Add your first video or text lesson!</p>
+          <Link
+            to={`/instructor/create-lesson?courseId=${courseId}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold"
+          >
+            <PlusCircle className="w-4 h-4" /> Add First Lesson
+          </Link>
         </div>
       ) : (
-        <div style={styles.list}>
-          {lessons.slice().sort((a, b) => a.order - b.order).map((lesson, index) => (
-            <div key={lesson.id} className="liquid-glass-card" style={styles.card}>
-              <div style={styles.orderBadge}>{lesson.order}</div>
-              <div style={styles.cardBody}>
-                <h3 style={styles.lessonTitle}>{lesson.title}</h3>
-                {lesson.content && <p style={styles.lessonPreview}>{lesson.content.length > 120 ? `${lesson.content.slice(0, 120)}...` : lesson.content}</p>}
-                <div style={styles.badges}>
-                  {(lesson.video || lesson.video_url) && <span style={styles.badge}>Video</span>}
-                  {(lesson.image || lesson.image_url) && <span style={styles.badge}>Image</span>}
-                </div>
-              </div>
-              <div style={styles.actions}>
-                <button type="button" onClick={() => startEditing(lesson)} style={styles.editButton}>Edit</button>
-                <button type="button" onClick={() => deleteLesson(lesson)} disabled={deletingId === lesson.id} style={styles.deleteButton}>
-                  {deletingId === lesson.id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-              <div style={styles.lessonIndex}>#{index + 1}</div>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {lessons.map((lesson) => {
+            const isEditingThis = editingLesson?.id === lesson.id;
+
+            return (
+              <motion.div
+                key={lesson.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card p-6 border border-slate-800/80 hover:border-violet-500/40 transition-all space-y-4"
+              >
+                {isEditingThis ? (
+                  <form onSubmit={saveLesson} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div className="sm:col-span-3">
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={editData.title}
+                          onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Order</label>
+                        <input
+                          type="number"
+                          required
+                          value={editData.order}
+                          onChange={(e) => setEditData({ ...editData, order: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-white text-center"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Video URL</label>
+                      <input
+                        type="url"
+                        value={editData.video_url}
+                        onChange={(e) => setEditData({ ...editData, video_url: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Content Notes</label>
+                      <textarea
+                        rows={3}
+                        value={editData.content}
+                        onChange={(e) => setEditData({ ...editData, content: e.target.value })}
+                        className="w-full p-3 rounded-xl glass-input text-xs text-white resize-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="px-4 py-2 rounded-xl glass-button-primary text-xs font-bold flex items-center gap-1.5"
+                      >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" /> Save Changes</>}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingLesson(null)}
+                        className="px-4 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-bold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 font-mono font-bold flex items-center justify-center text-xs">
+                        #{lesson.order}
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-bold text-white mb-1">{lesson.title}</h3>
+                        <p className="text-xs text-slate-400 line-clamp-1">{lesson.content || 'No text notes.'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <Link
+                        to={`/instructor/quiz?lessonId=${lesson.id}`}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
+                      >
+                        <Brain className="w-3.5 h-3.5" /> Quizzes
+                      </Link>
+
+                      <button
+                        onClick={() => startEditing(lesson)}
+                        className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+                        title="Edit Lesson"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => deleteLesson(lesson.id)}
+                        className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20"
+                        title="Delete Lesson"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      {editingLesson && (
-        <div style={styles.modalBackdrop}>
-          <form onSubmit={saveLesson} style={styles.modal}>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Edit Lesson</h2>
-              <button type="button" onClick={() => setEditingLesson(null)} style={styles.closeButton} aria-label="Close">x</button>
-            </div>
-            <label style={styles.label}>Lesson Title</label>
-            <input required value={editData.title} onChange={event => setEditData(current => ({ ...current, title: event.target.value }))} style={styles.input} />
-            <label style={styles.label}>Lesson Content</label>
-            <textarea required value={editData.content} onChange={event => setEditData(current => ({ ...current, content: event.target.value }))} style={{ ...styles.input, height: '130px', resize: 'vertical' }} />
-            <label style={styles.label}>Lesson Order</label>
-            <input required type="number" min="1" value={editData.order} onChange={event => setEditData(current => ({ ...current, order: Number(event.target.value) || 1 }))} style={styles.input} />
-            <label style={styles.label}>Video URL</label>
-            <input type="url" value={editData.video_url} onChange={event => setEditData(current => ({ ...current, video_url: event.target.value }))} placeholder="https://..." style={styles.input} />
-            <label style={styles.label}>Image URL</label>
-            <input type="url" value={editData.image_url} onChange={event => setEditData(current => ({ ...current, image_url: event.target.value }))} placeholder="https://..." style={styles.input} />
-            <div style={styles.modalActions}>
-              <button type="button" onClick={() => setEditingLesson(null)} style={styles.cancelButton}>Cancel</button>
-              <button type="submit" disabled={saving} style={styles.saveButton}>{saving ? 'Saving...' : 'Save Changes'}</button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
-
-const styles = {
-  page: { maxWidth: '900px', margin: '0 auto', padding: '2rem', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: '#f8fafc', minHeight: '100vh' },
-  header: { background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', borderRadius: '16px', padding: '2rem', marginBottom: '2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' },
-  heading: { fontSize: '1.9rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.25rem 0 0', fontSize: '1rem' },
-  addButton: { backgroundColor: 'white', color: '#3b82f6', padding: '0.7rem 1.4rem', borderRadius: '8px', textDecoration: 'none', fontWeight: '700', fontSize: '0.95rem', whiteSpace: 'nowrap' },
-  errorBox: { backgroundColor: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem' },
-  list: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex', alignItems: 'flex-start', gap: '1.25rem' },
-  orderBadge: { backgroundColor: '#eff6ff', color: '#3b82f6', borderRadius: '10px', padding: '0.4rem 0.75rem', fontWeight: '700', fontSize: '1rem', flexShrink: 0, marginTop: '2px' },
-  cardBody: { flex: 1, minWidth: 0 },
-  lessonTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.4rem' },
-  lessonPreview: { fontSize: '0.875rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 0.6rem' },
-  badges: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
-  badge: { backgroundColor: '#f1f5f9', color: '#475569', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600' },
-  actions: { display: 'flex', gap: '0.5rem', flexShrink: 0 },
-  editButton: { border: 'none', backgroundColor: '#dbeafe', color: '#1d4ed8', borderRadius: '7px', padding: '0.45rem 0.75rem', cursor: 'pointer', fontWeight: '700' },
-  deleteButton: { border: 'none', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '7px', padding: '0.45rem 0.75rem', cursor: 'pointer', fontWeight: '700' },
-  lessonIndex: { color: '#cbd5e1', fontWeight: '700', fontSize: '1.1rem', flexShrink: 0 },
-  emptyBox: { backgroundColor: 'white', borderRadius: '14px', padding: '4rem 2rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  emptyTitle: { fontSize: '1.5rem', color: '#1e293b', margin: '0 0 0.5rem' },
-  emptyText: { color: '#64748b', marginBottom: '1.5rem' },
-  center: { display: 'flex', justifyContent: 'center', padding: '4rem' },
-  spinner: { width: '48px', height: '48px', border: '5px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' },
-  modalBackdrop: { position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
-  modal: { width: '100%', maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'white', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' },
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
-  modalTitle: { color: '#1e293b', margin: 0, fontSize: '1.35rem' },
-  closeButton: { border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer', fontSize: '1.5rem', lineHeight: 1 },
-  label: { display: 'block', color: '#334155', fontWeight: '700', fontSize: '0.9rem', margin: '0.9rem 0 0.4rem' },
-  input: { width: '100%', boxSizing: 'border-box', padding: '0.7rem', border: '1px solid #cbd5e1', borderRadius: '8px', font: 'inherit' },
-  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' },
-  cancelButton: { border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#334155', borderRadius: '8px', padding: '0.65rem 1rem', cursor: 'pointer', fontWeight: '700' },
-  saveButton: { border: 'none', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', padding: '0.65rem 1rem', cursor: 'pointer', fontWeight: '700' },
-};
 
 export default ManageLessons;

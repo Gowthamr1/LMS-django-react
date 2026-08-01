@@ -3,6 +3,8 @@ import axiosInstance from '../axiosInstance';
 import { Link } from 'react-router-dom';
 import ChangePassword from './ChangePassword';
 import LmsLoader from './LmsLoader';
+import { User, Mail, Shield, BookOpen, CheckCircle, Clock, Award, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function Profile() {
   const [profile, setProfile] = useState(null);
@@ -18,190 +20,128 @@ function Profile() {
         setProfile(profileRes.data);
         setEnrollments(enrollRes.data);
       })
-      .catch(err => console.error('❌ Error fetching data:', err))
+      .catch(err => console.error('Error fetching profile:', err))
       .finally(() => setLoading(false));
   }, []);
 
   const completedCount = enrollments.filter(e => e.completed).length;
   const inProgressCount = enrollments.length - completedCount;
 
-  if (loading) return (
-    <div style={styles.loadingPage}><LmsLoader title="Loading your profile" subtitle="Getting your learning details ready" size="lg" /></div>
-  );
+  if (loading) {
+    return <LmsLoader title="Loading your profile" subtitle="Preparing your learning metrics..." size="lg" />;
+  }
 
   return (
-    <div style={styles.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
-      {/* Header / Profile Card */}
-      <div style={styles.header}>
-        <h1 style={styles.pageTitle}>🎓 My Profile</h1>
-        <div className="liquid-glass-card" style={styles.profileCard}>
-          {profile ? (
-            <>
-              <div style={styles.avatar}>
-                {profile.username[0].toUpperCase()}
-              </div>
-              <div style={styles.profileInfo}>
-                <h2 style={styles.username}>{profile.username}</h2>
-                <p style={styles.meta}><span style={styles.metaLabel}>📧 Email:</span> {profile.email}</p>
-                <p style={styles.meta}><span style={styles.metaLabel}>🎭 Role:</span> <span style={styles.roleBadge}>{profile.role}</span></p>
-              </div>
-            </>
-          ) : (
-            <p style={{ color: '#64748b' }}>No profile data found.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Stats row */}
-      <div style={styles.statsRow}>
-        <div className="liquid-glass-card" style={styles.statCard}>
-          <div style={styles.statIcon}>📚</div>
-          <div style={styles.statValue}>{enrollments.length}</div>
-          <div style={styles.statLabel}>Enrolled</div>
-        </div>
-        <div className="liquid-glass-card" style={styles.statCard}>
-          <div style={styles.statIcon}>✅</div>
-          <div style={styles.statValue}>{completedCount}</div>
-          <div style={styles.statLabel}>Completed</div>
-        </div>
-        <div className="liquid-glass-card" style={styles.statCard}>
-          <div style={styles.statIcon}>📖</div>
-          <div style={styles.statValue}>{inProgressCount}</div>
-          <div style={styles.statLabel}>In Progress</div>
-        </div>
-      </div>
-
-      <ChangePassword />
-
-      {/* Enrollments */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>📖 My Enrollments</h2>
-        {enrollments.length === 0 ? (
-          <div style={styles.emptyBox}>
-            <div style={styles.emptyIcon}>😕</div>
-            <p style={styles.emptyText}>No courses enrolled yet</p>
-            <Link to="/student/browse" style={styles.browseBtn}>Browse Courses →</Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Header Profile Card */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-8 rounded-3xl border border-indigo-500/20 shadow-2xl mb-8 relative overflow-hidden bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90"
+      >
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-extrabold text-3xl flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-indigo-400/40">
+            {profile?.username ? profile.username[0].toUpperCase() : 'U'}
           </div>
-        ) : (
-          <div style={styles.grid}>
-            {enrollments.map(enroll => {
-              const pct = enroll.total_lessons > 0
-                ? Math.round((enroll.completed_lessons / enroll.total_lessons) * 100) : 0;
-              return (
-                <div key={enroll.id} className="liquid-glass-card" style={styles.courseCard}>
-                  <div style={styles.courseCardTop}>
-                    <div style={styles.courseIcon}>📘</div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={styles.courseTitle}>{enroll.course_title}</h3>
-                      <p style={styles.enrollDate}>
-                        🗓 {new Date(enroll.enrolled_on).toLocaleDateString()}
-                      </p>
+
+          <div className="flex-1 text-center sm:text-left space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+              <Sparkles className="w-3.5 h-3.5" /> Learner Profile
+            </div>
+            <h1 className="text-3xl font-extrabold text-white">{profile?.username}</h1>
+            <p className="text-xs text-slate-300 flex items-center justify-center sm:justify-start gap-1.5">
+              <Mail className="w-4 h-4 text-indigo-400" /> {profile?.email}
+            </p>
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold uppercase">
+                <Shield className="w-3.5 h-3.5 text-indigo-400" /> Role: {profile?.role}
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats Counter Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="glass-card p-6 border border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-extrabold text-white">{enrollments.length}</span>
+            <p className="text-xs text-slate-400 font-medium">Total Courses Enrolled</p>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 border border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <CheckCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-extrabold text-white">{completedCount}</span>
+            <p className="text-xs text-slate-400 font-medium">Completed Courses</p>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 border border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-extrabold text-white">{inProgressCount}</span>
+            <p className="text-xs text-slate-400 font-medium">Courses In Progress</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Sections Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Enrolled Overview */}
+        <div className="glass-card p-6 sm:p-8 border border-slate-800 rounded-2xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-4 pb-3 border-b border-slate-800 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-indigo-400" /> Recent Enrollments
+            </h3>
+
+            {enrollments.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">No enrolled courses yet.</p>
+            ) : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {enrollments.slice(0, 5).map(enroll => (
+                  <div key={enroll.id} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-white">{enroll.course_title}</h4>
+                      <p className="text-[11px] text-slate-400">{enroll.completed_lessons} of {enroll.total_lessons} lessons done</p>
                     </div>
-                    <span style={{ ...styles.badge, ...(enroll.completed ? styles.badgeDone : styles.badgeProgress) }}>
-                      {enroll.completed ? 'Done' : `${pct}%`}
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                      enroll.completed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
+                    }`}>
+                      {enroll.completed ? 'Done' : 'Active'}
                     </span>
                   </div>
-                  <div style={styles.progressTrack}>
-                    <div style={{
-                      ...styles.progressFill,
-                      width: `${pct}%`,
-                      backgroundColor: enroll.completed ? '#22c55e' : '#06b6d4',
-                    }}></div>
-                  </div>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="pt-4 border-t border-slate-800 mt-4">
+            <Link to="/student/my-courses" className="text-xs font-bold text-indigo-400 hover:text-indigo-300">
+              View All Enrolled Courses →
+            </Link>
+          </div>
+        </div>
+
+        {/* Change Password Form */}
+        <div>
+          <ChangePassword />
+        </div>
+
       </div>
+
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '1200px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '1.5rem', color: 'white',
-  },
-  pageTitle: { fontSize: '2rem', fontWeight: '700', margin: '0 0 1.25rem' },
-  profileCard: {
-    backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem',
-    display: 'flex', alignItems: 'center', gap: '1.5rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-  },
-  avatar: {
-    width: '70px', height: '70px', borderRadius: '50%',
-    backgroundColor: '#06b6d4', color: 'white',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '1.8rem', fontWeight: '800', flexShrink: 0,
-  },
-  profileInfo: { flex: 1 },
-  username: { fontSize: '1.75rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.4rem' },
-  meta: { fontSize: '1rem', color: '#4b5563', margin: '0.3rem 0' },
-  metaLabel: { fontWeight: '700', color: '#374151' },
-  roleBadge: {
-    backgroundColor: '#e0f2fe', color: '#0369a1',
-    padding: '0.2rem 0.65rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700',
-  },
-  statsRow: {
-    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem',
-  },
-  statCard: {
-    backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem',
-    textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  },
-  statIcon: { fontSize: '2rem', marginBottom: '0.5rem' },
-  statValue: { fontSize: '2rem', fontWeight: '800', color: '#1e293b', lineHeight: 1 },
-  statLabel: { fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' },
-  section: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-  },
-  sectionTitle: {
-    fontSize: '1.4rem', fontWeight: '700', color: '#1e293b',
-    margin: '0 0 1.25rem', paddingBottom: '1rem', borderBottom: '2px solid #f1f5f9',
-  },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' },
-  courseCard: {
-    backgroundColor: '#f8fafc', borderRadius: '10px', padding: '1.25rem',
-    display: 'flex', flexDirection: 'column', gap: '0.75rem',
-  },
-  courseCardTop: { display: 'flex', alignItems: 'flex-start', gap: '0.75rem' },
-  courseIcon: {
-    width: '38px', height: '38px', backgroundColor: '#e0f2fe', borderRadius: '8px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0,
-  },
-  courseTitle: { fontSize: '0.95rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.2rem' },
-  enrollDate: { fontSize: '0.78rem', color: '#94a3b8', margin: 0 },
-  badge: { padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '700', flexShrink: 0 },
-  badgeDone: { backgroundColor: '#dcfce7', color: '#166534' },
-  badgeProgress: { backgroundColor: '#e0f2fe', color: '#0369a1' },
-  progressTrack: { height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: '3px', transition: 'width 0.5s ease' },
-  emptyBox: { textAlign: 'center', padding: '2.5rem' },
-  emptyIcon: { fontSize: '3rem', marginBottom: '0.75rem' },
-  emptyText: { color: '#64748b', fontSize: '1.1rem', marginBottom: '1rem' },
-  browseBtn: {
-    display: 'inline-block', padding: '0.65rem 1.5rem',
-    background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-    color: 'white', borderRadius: '8px', textDecoration: 'none', fontWeight: '700',
-  },
-  loadingPage: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc',
-  },
-  spinner: {
-    width: '50px', height: '50px', border: '5px solid #e2e8f0',
-    borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem',
-  },
-  loadingText: { color: '#64748b', fontSize: '1.1rem', fontStyle: 'italic' },
-};
 
 export default Profile;

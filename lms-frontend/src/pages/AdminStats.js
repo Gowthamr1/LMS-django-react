@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
 import LmsLoader from '../components/LmsLoader';
+import { BarChart3, Users, BookOpen, GraduationCap, RefreshCw, Sparkles, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function AdminStats() {
   const [stats, setStats] = useState({ users: 0, courses: 0, enrollments: 0 });
@@ -36,148 +38,98 @@ function AdminStats() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Platform Analytics</h2>
-        <div style={styles.controls}>
-          <span style={styles.updateTime}>Last updated: {lastUpdated}</span>
-          <button style={styles.refreshButton} onClick={fetchStats}>
-            ↻ Refresh
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-cyan-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-cyan-950/30 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Platform Intelligence
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            Platform Analytics 📊
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Real-time metric breakdown of total users, published courses, and student enrollments.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-400">Updated: {lastUpdated || 'Just now'}</span>
+          <button
+            onClick={fetchStats}
+            className="px-4 py-2 rounded-xl glass-button-primary text-xs font-bold flex items-center gap-2"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh Metrics
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {loading ? (
-        <LmsLoader title="Loading statistics" subtitle="Calculating platform analytics" size="lg" />
+        <LmsLoader title="Loading statistics" subtitle="Calculating platform analytics..." size="lg" />
       ) : (
         <>
-          {error && <div style={styles.error}>{error}</div>}
-          
-          <div style={styles.grid}>
-            <StatCard 
-              icon="👥"
-              title="Total Users"
-              value={stats.users}
-              trend="+12% this month"
-            />
-            <StatCard
-              icon="📚"
-              title="Total Courses"
-              value={stats.courses}
-              trend="+3 new this week"
-            />
-            <StatCard
-              icon="🎓"
-              title="Total Enrollments"
-              value={stats.enrollments}
-              trend="24 active now"
-            />
+          {error && (
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-6">
+              {error}
+            </div>
+          )}
+
+          {/* Stat Counter Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card p-6 border border-slate-800 flex items-center justify-between"
+            >
+              <div>
+                <span className="text-3xl font-extrabold text-white">{stats.users}</span>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Total Users</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <Users className="w-6 h-6" />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="glass-card p-6 border border-slate-800 flex items-center justify-between"
+            >
+              <div>
+                <span className="text-3xl font-extrabold text-white">{stats.courses}</span>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Active Courses</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
+                <BookOpen className="w-6 h-6" />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="glass-card p-6 border border-slate-800 flex items-center justify-between"
+            >
+              <div>
+                <span className="text-3xl font-extrabold text-white">{stats.enrollments}</span>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Total Enrollments</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+            </motion.div>
           </div>
         </>
       )}
+
     </div>
   );
 }
-
-const StatCard = ({ icon, title, value, trend }) => (
-  <div className="liquid-glass-card" style={styles.card}>
-    <div style={styles.cardIcon}>{icon}</div>
-    <div style={styles.cardContent}>
-      <h3 style={styles.cardTitle}>{title}</h3>
-      <div style={styles.cardValue}>{value.toLocaleString()}</div>
-      <div style={styles.cardTrend}>{trend}</div>
-    </div>
-  </div>
-);
-
-const styles = {
-  container: {
-    padding: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '2rem'
-  },
-  title: {
-    color: '#2c3e50',
-    margin: 0
-  },
-  controls: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  refreshButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    ':hover': {
-      backgroundColor: '#e9ecef'
-    }
-  },
-  updateTime: {
-    color: '#6c757d',
-    fontSize: '0.9rem'
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '1.5rem',
-    marginBottom: '2rem'
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  cardIcon: {
-    fontSize: '2rem',
-    padding: '1rem',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px'
-  },
-  cardContent: {
-    flex: 1
-  },
-  cardTitle: {
-    fontSize: '1rem',
-    color: '#6c757d',
-    margin: '0 0 0.25rem 0'
-  },
-  cardValue: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    color: '#2c3e50'
-  },
-  cardTrend: {
-    fontSize: '0.9rem',
-    color: '#28a745',
-    marginTop: '0.25rem'
-  },
-  loading: {
-    padding: '2rem',
-    textAlign: 'center',
-    color: '#6c757d'
-  },
-  error: {
-    padding: '1rem',
-    marginBottom: '1.5rem',
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-    borderRadius: '4px',
-    border: '1px solid #ffeeba'
-  }
-};
 
 export default AdminStats;

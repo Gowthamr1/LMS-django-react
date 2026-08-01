@@ -1,98 +1,137 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ReactBitsParticles from '../../components/ReactBitsParticles';
-
+import { motion } from 'framer-motion';
+import { BookOpen, Video, FolderKanban, Users, Star, Brain, Sparkles, ArrowRight, PlusCircle } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const features = [
-  { title: 'Create Course', icon: '📘', path: '/instructor/create-course', description: 'Develop new courses and structure your curriculum' },
-  { title: 'Upload Lesson', icon: '🎬', path: '/instructor/create-lesson', description: 'Add lessons, videos, and educational materials' },
-  { title: 'Manage Courses', icon: '📚', path: '/instructor/my-courses', description: 'Edit existing courses and update content' },
-  { title: 'Student Enrollments', icon: '👥', path: '/instructor/enrollments', description: 'Track student registrations and progress' },
-  { title: 'Course Reviews', icon: '⭐', path: '/instructor/reviews', description: 'Monitor feedback and ratings from students' },
-  { title: 'Quiz Management', icon: '🧠', path: '/instructor/quiz', description: 'Create and manage assessments for your courses' },
+  {
+    title: 'Create Course',
+    icon: PlusCircle,
+    iconColor: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/10 border-indigo-500/20',
+    path: '/instructor/create-course',
+    description: 'Develop new courses, set pricing, duration, and difficulty level.'
+  },
+  {
+    title: 'Upload Lesson',
+    icon: Video,
+    iconColor: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10 border-cyan-500/20',
+    path: '/instructor/create-lesson',
+    description: 'Add video lessons, downloadable materials, and content modules.'
+  },
+  {
+    title: 'Manage Courses',
+    icon: FolderKanban,
+    iconColor: 'text-violet-400',
+    bgColor: 'bg-violet-500/10 border-violet-500/20',
+    path: '/instructor/my-courses',
+    description: 'Edit your published courses, update order, and manage lessons.'
+  },
+  {
+    title: 'Student Enrollments',
+    icon: Users,
+    iconColor: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10 border-emerald-500/20',
+    path: '/instructor/enrollments',
+    description: 'Track student registrations, completion status, and learner lists.'
+  },
+  {
+    title: 'Course Reviews',
+    icon: Star,
+    iconColor: 'text-amber-400',
+    bgColor: 'bg-amber-500/10 border-amber-500/20',
+    path: '/instructor/reviews',
+    description: 'Monitor student feedback, ratings, and course satisfaction.'
+  },
+  {
+    title: 'Quiz Builder',
+    icon: Brain,
+    iconColor: 'text-rose-400',
+    bgColor: 'bg-rose-500/10 border-rose-500/20',
+    path: '/instructor/quiz',
+    description: 'Create interactive assessments and multiple-choice quizzes.'
+  },
 ];
 
 function InstructorDashboard() {
+  const { user } = useAuth();
+
   return (
-    <div style={styles.page}>
-      <ReactBitsParticles particleCount={400} particleSpread={9} speed={0.1} particleColors={["#5700ff", "#01daff", "#004dff"]} moveParticlesOnHover particleHoverFactor={1} alphaParticles={false} particleBaseSize={260} sizeRandomness={1} cameraDistance={18} disableRotation={false} />
-      {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.heading}>Welcome Back, Instructor! 👋</h1>
-        <p style={styles.subheading}>Manage your educational content and track student progress</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Header Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-10 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
+        <div className="relative z-10 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Instructor Workspace
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+            Welcome, {user?.username || 'Instructor'}! 🎓
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Manage your courses, create new content modules, monitor student progress, and review student feedback.
+          </p>
+        </div>
+
+        <div className="flex gap-3 relative z-10">
+          <Link
+            to="/instructor/create-course"
+            className="px-5 py-2.5 rounded-xl glass-button-primary text-sm font-semibold inline-flex items-center gap-2"
+          >
+            <PlusCircle className="w-4 h-4" /> New Course
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* Grid of Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {features.map((feature, index) => {
+          const Icon = feature.icon;
+
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Link
+                to={feature.path}
+                className="glass-card p-6 flex flex-col justify-between h-[230px] group border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300 block"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 rounded-2xl ${feature.bgColor} border flex items-center justify-center`}>
+                      <Icon className={`w-6 h-6 ${feature.iconColor}`} />
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-4 border-t border-slate-800/60">
+                  <span>Access Control</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Feature Cards */}
-      <div style={styles.grid}>
-        {features.map((feature, index) => (
-          <Link key={index} to={feature.path} style={styles.cardLink}>
-            <div className="liquid-glass-card" style={styles.card}>
-              <div style={styles.iconWrap}>{feature.icon}</div>
-              <h3 style={styles.cardTitle}>{feature.title}</h3>
-              <p style={styles.cardDesc}>{feature.description}</p>
-              <div style={styles.arrow}>→</div>
-            </div>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc',
-    minHeight: '100vh',
-    position: 'relative',
-    isolation: 'isolate',
-    overflow: 'hidden',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px',
-    padding: '2.5rem 2rem',
-    marginBottom: '2rem',
-    color: 'white',
-    textAlign: 'center',
-  },
-  heading: { fontSize: '2.2rem', fontWeight: '700', margin: 0 },
-  subheading: { fontSize: '1.05rem', opacity: 0.85, marginTop: '0.5rem', marginBottom: 0 },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '1.5rem',
-  },
-  cardLink: { textDecoration: 'none' },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: '14px',
-    padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    cursor: 'pointer',
-  },
-  iconWrap: {
-    fontSize: '2.5rem',
-    backgroundColor: '#eff6ff',
-    borderRadius: '50%',
-    width: '70px',
-    height: '70px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '1rem',
-  },
-  cardTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.5rem' },
-  cardDesc: { fontSize: '0.9rem', color: '#64748b', lineHeight: 1.55, margin: '0 0 1rem' },
-  arrow: { color: '#3b82f6', fontWeight: '700', fontSize: '1.1rem' },
-};
 
 export default InstructorDashboard;

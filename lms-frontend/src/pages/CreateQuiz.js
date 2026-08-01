@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosInstance';
+import { PlusCircle, Trash2, CheckCircle2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function CreateQuiz() {
   const [lessons, setLessons] = useState([]);
@@ -48,157 +50,168 @@ function CreateQuiz() {
           correct_answer: q.correctAnswer,
         });
       }
-      setMessage(`✅ Quiz and ${questions.length} question${questions.length !== 1 ? 's' : ''} created!`);
+      setMessage(`Quiz and ${questions.length} question(s) created successfully!`);
       setLessonId(''); setQuizTitle('');
       setQuestions([{ questionText: '', choices: { a: '', b: '', c: '', d: '' }, correctAnswer: 'A' }]);
     } catch (err) {
-      setMessage('❌ Failed to create quiz.');
+      setMessage('Failed to create quiz.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.heading}>🧠 Create New Quiz</h1>
-        <p style={styles.subheading}>Build assessments for your students</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+      
+      {/* Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl p-8 mb-8 glass-panel border border-indigo-500/20 shadow-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90"
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
+          <Sparkles className="w-3.5 h-3.5" /> Assessment Builder
+        </div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+          Create Lesson Quiz 🧠
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Build multiple choice question modules to evaluate student knowledge.
+        </p>
+      </motion.div>
+
+      {/* Form Card */}
+      <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
+        
+        {message && (
+          <div className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+            message.includes('successfully') 
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+              : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+          }`}>
+            {message.includes('successfully') ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+            <span>{message}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Target Lesson</label>
+              <select
+                required
+                value={lessonId}
+                onChange={(e) => setLessonId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white bg-slate-900 focus:bg-slate-900"
+              >
+                <option value="" className="bg-slate-900 text-slate-400">Select lesson...</option>
+                {lessons.map(l => (
+                  <option key={l.id} value={l.id} className="bg-slate-900 text-white">{l.title}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Quiz Title</label>
+              <input
+                type="text"
+                required
+                value={quizTitle}
+                onChange={(e) => setQuizTitle(e.target.value)}
+                placeholder="e.g. Chapter 1 Mastery Check"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm text-white placeholder-slate-500"
+              />
+            </div>
+          </div>
+
+          {/* Dynamic Questions Builder */}
+          <div className="space-y-6 pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Questions List</h3>
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1.5"
+              >
+                <PlusCircle className="w-3.5 h-3.5" /> Add Question
+              </button>
+            </div>
+
+            {questions.map((q, idx) => (
+              <div key={idx} className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 relative">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Question #{idx + 1}</span>
+                  {questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(idx)}
+                      className="p-1 text-rose-400 hover:text-rose-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    required
+                    value={q.questionText}
+                    onChange={(e) => handleQuestionChange(idx, 'questionText', e.target.value)}
+                    placeholder="Enter question text..."
+                    className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-white placeholder-slate-500"
+                  />
+                </div>
+
+                {/* Choices A, B, C, D */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {['a', 'b', 'c', 'd'].map(key => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center font-mono font-bold text-[10px] text-slate-300">
+                        {key.toUpperCase()}
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        value={q.choices[key]}
+                        onChange={(e) => handleQuestionChange(idx, 'choices', { [key]: e.target.value })}
+                        placeholder={`Option ${key.toUpperCase()}`}
+                        className="w-full px-3 py-2 rounded-xl glass-input text-xs text-white placeholder-slate-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Correct Answer Choice</label>
+                  <select
+                    value={q.correctAnswer}
+                    onChange={(e) => handleQuestionChange(idx, 'correctAnswer', e.target.value)}
+                    className="w-44 px-3 py-2 rounded-xl glass-input text-xs text-white bg-slate-900"
+                  >
+                    <option value="A">Option A</option>
+                    <option value="B">Option B</option>
+                    <option value="C">Option C</option>
+                    <option value="D">Option D</option>
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-4 px-4 rounded-xl glass-button-primary text-sm font-bold flex items-center justify-center gap-2 mt-4"
+          >
+            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Quiz & Questions'}
+          </button>
+        </form>
+
       </div>
 
-      {message && (
-        <div style={{ ...styles.alert, ...(message.startsWith('✅') ? styles.alertSuccess : styles.alertError) }}>
-          {message}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Quiz Info */}
-        <div className="liquid-glass-card" style={styles.card}>
-          <h2 style={styles.sectionTitle}>Quiz Details</h2>
-          <div style={styles.group}>
-            <label style={styles.label}>Select Lesson</label>
-            <select value={lessonId} onChange={e => setLessonId(e.target.value)} required style={styles.input}>
-              <option value="">— Select a Lesson —</option>
-              {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
-            </select>
-          </div>
-          <div style={styles.group}>
-            <label style={styles.label}>Quiz Title</label>
-            <input value={quizTitle} onChange={e => setQuizTitle(e.target.value)}
-              required style={styles.input} placeholder="e.g. Chapter 1 Assessment" />
-          </div>
-        </div>
-
-        {/* Questions */}
-        {questions.map((q, idx) => (
-          <div key={idx} className="liquid-glass-card" style={styles.questionCard}>
-            <div style={styles.questionHeader}>
-              <span style={styles.questionNum}>Question {idx + 1}</span>
-              {questions.length > 1 && (
-                <button type="button" onClick={() => removeQuestion(idx)} style={styles.removeBtn}>✕ Remove</button>
-              )}
-            </div>
-
-            <div style={styles.group}>
-              <label style={styles.label}>Question Text</label>
-              <textarea value={q.questionText}
-                onChange={e => handleQuestionChange(idx, 'questionText', e.target.value)}
-                required style={{ ...styles.input, height: '90px', resize: 'vertical' }}
-                placeholder="Enter your question here..." />
-            </div>
-
-            <div style={styles.choicesGrid}>
-              {['a', 'b', 'c', 'd'].map(choice => (
-                <div key={choice}>
-                  <label style={styles.label}>Option {choice.toUpperCase()}</label>
-                  <input value={q.choices[choice]}
-                    onChange={e => handleQuestionChange(idx, 'choices', { [choice]: e.target.value })}
-                    required style={styles.input} placeholder={`Option ${choice.toUpperCase()}`} />
-                </div>
-              ))}
-            </div>
-
-            <div style={styles.group}>
-              <label style={styles.label}>Correct Answer</label>
-              <div style={styles.answerRow}>
-                {['A', 'B', 'C', 'D'].map(ans => (
-                  <button key={ans} type="button"
-                    onClick={() => handleQuestionChange(idx, 'correctAnswer', ans)}
-                    style={{
-                      ...styles.answerBtn,
-                      ...(q.correctAnswer === ans ? styles.answerBtnActive : {}),
-                    }}>
-                    {ans}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {/* Actions */}
-        <div style={styles.actions}>
-          <button type="button" onClick={addQuestion} disabled={questions.length >= 100} style={styles.addBtn}>
-            ➕ Add Question ({questions.length}/100)
-          </button>
-          <button type="submit" disabled={submitting} style={{ ...styles.submitBtn, opacity: submitting ? 0.7 : 1 }}>
-            {submitting ? 'Publishing...' : '🚀 Publish Quiz'}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: '800px', margin: '0 auto', padding: '2rem',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#f8fafc', minHeight: '100vh',
-  },
-  header: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    borderRadius: '16px', padding: '2rem', marginBottom: '2rem', color: 'white',
-  },
-  heading: { fontSize: '2rem', fontWeight: '700', margin: 0 },
-  subheading: { opacity: 0.85, margin: '0.4rem 0 0', fontSize: '1rem' },
-  card: { backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '1.5rem' },
-  sectionTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', margin: '0 0 1.25rem' },
-  questionCard: {
-    backgroundColor: 'white', borderRadius: '14px', padding: '1.75rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '1.25rem',
-    borderLeft: '4px solid #3b82f6',
-  },
-  questionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' },
-  questionNum: { fontSize: '1rem', fontWeight: '700', color: '#3b82f6' },
-  removeBtn: { background: 'none', border: '1px solid #fca5a5', color: '#ef4444', padding: '0.3rem 0.75rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600' },
-  group: { marginBottom: '1.25rem' },
-  label: { display: 'block', fontWeight: '600', color: '#374151', marginBottom: '0.4rem', fontSize: '0.9rem' },
-  input: {
-    width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0',
-    borderRadius: '8px', fontSize: '0.95rem', boxSizing: 'border-box', fontFamily: 'inherit',
-  },
-  choicesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' },
-  answerRow: { display: 'flex', gap: '0.75rem' },
-  answerBtn: {
-    flex: 1, padding: '0.65rem', border: '2px solid #e2e8f0', borderRadius: '8px',
-    backgroundColor: 'white', color: '#374151', fontWeight: '700', cursor: 'pointer', fontSize: '1rem',
-  },
-  answerBtnActive: { borderColor: '#3b82f6', backgroundColor: '#eff6ff', color: '#3b82f6' },
-  actions: { display: 'flex', gap: '1rem', justifyContent: 'space-between', marginTop: '0.5rem' },
-  addBtn: {
-    padding: '0.75rem 1.5rem', backgroundColor: '#eff6ff', color: '#3b82f6',
-    border: '2px solid #bfdbfe', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '0.95rem',
-  },
-  submitBtn: {
-    padding: '0.75rem 2rem',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-    color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '0.95rem',
-  },
-  alert: { padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: '500' },
-  alertSuccess: { backgroundColor: '#dcfce7', color: '#166534' },
-  alertError: { backgroundColor: '#fee2e2', color: '#991b1b' },
-};
 
 export default CreateQuiz;
