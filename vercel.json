@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "lms-frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "lms-frontend/$1"
+    }
+  ]
+}
